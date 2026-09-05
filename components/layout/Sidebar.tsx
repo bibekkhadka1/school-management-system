@@ -70,11 +70,11 @@ export default function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-white">
-      
+
       {/* Logo */}
       <div className="flex h-20 items-center gap-3 border-b px-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <School size={24} />
+          <School size={23} />
         </div>
 
         <div>
@@ -116,9 +116,9 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom Menu */}
+      {/* Bottom */}
       <div className="border-t p-4">
-        
+
         <Link
           href="/teacher/settings"
           className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
