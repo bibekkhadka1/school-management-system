@@ -1,13 +1,53 @@
+import {
+  BookOpen,
+  Users,
+  ClipboardCheck,
+  ClipboardList,
+} from "lucide-react";
+
+import WelcomeSection from "@/components/dashboard/WelcomeSection";
+import StatCard from "@/components/dashboard/StatCard";
+
 export default function TeacherDashboard() {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900">
-        Teacher Dashboard
-      </h1>
 
-      <p className="mt-2 text-gray-500">
-        Welcome back! Here is your teaching overview.
-      </p>
+      {/* Welcome */}
+      <WelcomeSection />
+
+      {/* Statistics */}
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+        <StatCard
+          title="My Classes"
+          value="06"
+          description="Currently assigned"
+          icon={BookOpen}
+        />
+
+        <StatCard
+          title="Total Students"
+          value="142"
+          description="Across all classes"
+          icon={Users}
+        />
+
+        <StatCard
+          title="Attendance"
+          value="92%"
+          description="Average attendance"
+          icon={ClipboardCheck}
+        />
+
+        <StatCard
+          title="Pending Tasks"
+          value="08"
+          description="Assignments to review"
+          icon={ClipboardList}
+        />
+
+      </div>
+
     </div>
   );
 }

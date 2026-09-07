@@ -117,7 +117,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="border-t p-4">
+      <div className="border-t border-gray-300 p-4">
 
         <Link
           href="/teacher/settings"
