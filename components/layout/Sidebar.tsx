@@ -3,137 +3,160 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  ClipboardCheck,
-  ClipboardList,
+  LayoutGrid,
   GraduationCap,
-  FolderOpen,
+  Users,
+  CalendarCheck,
+  ClipboardList,
+  HelpCircle,
+  BookOpen,
   MessageSquare,
-  Bell,
-  Settings,
+  Megaphone,
+  HelpCircle as HelpIcon,
   LogOut,
   School,
 } from "lucide-react";
 
 const menuItems = [
   {
-    name: "Dashboard",
+    name: "DASHBOARD",
     href: "/teacher",
-    icon: LayoutDashboard,
+    icon: LayoutGrid,
   },
   {
-    name: "Classes",
+    name: "CLASSES",
     href: "/teacher/classes",
-    icon: BookOpen,
+    icon: GraduationCap,
   },
   {
-    name: "Students",
+    name: "STUDENTS",
     href: "/teacher/students",
     icon: Users,
   },
   {
-    name: "Attendance",
+    name: "ATTENDANCE",
     href: "/teacher/attendance",
-    icon: ClipboardCheck,
+    icon: CalendarCheck,
   },
   {
-    name: "Assignments",
+    name: "ASSIGNMENTS",
     href: "/teacher/assignments",
     icon: ClipboardList,
   },
   {
-    name: "Exams & Marks",
+    name: "EXAMS",
     href: "/teacher/exams",
-    icon: GraduationCap,
+    icon: HelpCircle,
   },
   {
-    name: "Learning Materials",
+    name: "MATERIALS",
     href: "/teacher/materials",
-    icon: FolderOpen,
+    icon: BookOpen,
   },
   {
-    name: "Messages",
+    name: "MESSAGES",
     href: "/teacher/messages",
     icon: MessageSquare,
   },
   {
-    name: "Notices",
+    name: "NOTICES",
     href: "/teacher/notices",
-    icon: Bell,
+    icon: Megaphone,
+  },
+];
+
+const bottomItems = [
+  {
+    name: "HELP CENTER",
+    href: "/teacher/help",
+    icon: HelpIcon,
   },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
+  // Typography Spec: Inter, semibold (600), 12px font-size, 16px line-height, 0.6px letter-spacing
+  const typographyClass =
+    "font-inter font-semibold text-[12px] leading-[16px] tracking-[0.6px]";
+
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-white">
+    <aside className="flex h-screen w-64 flex-col justify-between border-r border-gray-200/80 bg-[#F1F3F9] px-4 py-6">
+      <div>
+        {/* Header / Logo */}
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-2 shadow-sm border border-gray-200/60 text-[#2563EB]">
+            <School size={22} />
+          </div>
 
-      {/* Logo */}
-      <div className="flex h-20 items-center gap-3 border-b px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <School size={23} />
+          <div>
+            <h1 className="text-xl font-bold leading-none text-[#1D4ED8]">
+              Vineev Edu
+            </h1>
+            <p className="mt-1 text-xs font-normal text-gray-500">
+              Teacher Portal
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">
-            SchoolHub
-          </h1>
+        {/* Primary Navigation */}
+        <nav className="space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
 
-          <p className="text-xs text-gray-500">
-            Teacher Portal
-          </p>
-        </div>
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/teacher" && pathname.startsWith(item.href));
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition ${typographyClass} ${
+                  isActive
+                    ? "bg-[#2563EB] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-[#2563EB] hover:text-white"
+                }`}
+              >
+                <Icon size={18} />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
+      {/* Bottom Navigation */}
+      <div>
+        <div className="mb-4 border-t border-gray-200" />
+        <nav className="space-y-1">
+          {bottomItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname.startsWith(item.href);
 
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/teacher" &&
-              pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition ${typographyClass} ${
+                  isActive
+                    ? "bg-[#2563EB] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-[#2563EB] hover:text-white"
+                }`}
+              >
+                <Icon size={18} />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
-                isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <Icon size={20} />
-
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bottom */}
-      <div className="border-t border-gray-300 p-4">
-
-        <Link
-          href="/teacher/settings"
-          className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
-        >
-          <Settings size={20} />
-          <span>Settings</span>
-        </Link>
-
-        <button
-          className="mt-1 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50"
-        >
-          <LogOut size={20} />
-          <span>Logout</span>
-        </button>
-
+          <button
+            className={`flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-gray-600 transition hover:bg-[#2563EB] hover:text-white ${typographyClass}`}
+          >
+            <LogOut size={18} />
+            <span>SIGN OUT</span>
+          </button>
+        </nav>
       </div>
     </aside>
   );
