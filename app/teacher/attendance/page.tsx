@@ -141,6 +141,14 @@ const subjectOptions = [
   "Mobile Application Dev",
 ];
 
+type StatCardProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  description: string;
+  hoverColor: "blue" | "emerald" | "rose" | "purple";
+};
+
 export default function AttendancePage() {
   const [selectedClass, setSelectedClass] = useState("BCA-3A");
 
@@ -362,6 +370,7 @@ export default function AttendancePage() {
             label="Total Students"
             value={totalStudents}
             description="Students in this class"
+            hoverColor="blue"
           />
 
           <StatCard
@@ -369,6 +378,7 @@ export default function AttendancePage() {
             label="Present"
             value={presentCount}
             description="Marked present"
+            hoverColor="emerald"
           />
 
           <StatCard
@@ -376,6 +386,7 @@ export default function AttendancePage() {
             label="Absent"
             value={absentCount}
             description="Marked absent"
+            hoverColor="rose"
           />
 
           <StatCard
@@ -383,6 +394,7 @@ export default function AttendancePage() {
             label="Attendance"
             value={`${attendancePercentage}%`}
             description={`${lateCount} student(s) late`}
+            hoverColor="purple"
           />
         </div>
 
@@ -794,14 +806,19 @@ function StatCard({
   label,
   value,
   description,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  description: string;
-}) {
+  hoverColor,
+}: StatCardProps) {
+  const hoverClasses = {
+    blue: "hover:border-blue-300",
+    emerald: "hover:border-emerald-300",
+    rose: "hover:border-rose-300",
+    purple: "hover:border-purple-300",
+  };
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div
+      className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md ${hoverClasses[hoverColor]}`}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-bold text-slate-500">

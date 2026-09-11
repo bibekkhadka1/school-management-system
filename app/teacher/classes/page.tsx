@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
-  Plus,
   Users,
   CalendarDays,
   Clock3,
@@ -109,6 +108,18 @@ const subjectOptions = [
   "Data Science",
 ];
 
+type StatCardProps = {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ReactNode;
+  hoverColor:
+    | "blue"
+    | "emerald"
+    | "purple"
+    | "amber";
+};
+
 export default function ClassesPage() {
   const router = useRouter();
 
@@ -186,6 +197,7 @@ export default function ClassesPage() {
             value={classes.length}
             description={`${activeClasses} active classes`}
             icon={<BookOpen className="h-5 w-5" />}
+            hoverColor="blue"
           />
 
           <StatCard
@@ -193,6 +205,7 @@ export default function ClassesPage() {
             value={totalStudents}
             description="Across all classes"
             icon={<Users className="h-5 w-5" />}
+            hoverColor="emerald"
           />
 
           <StatCard
@@ -200,6 +213,7 @@ export default function ClassesPage() {
             value={`${averageAttendance.toFixed(1)}%`}
             description="Across all classes"
             icon={<TrendingUp className="h-5 w-5" />}
+            hoverColor="purple"
           />
 
           <StatCard
@@ -207,6 +221,7 @@ export default function ClassesPage() {
             value={upcomingClasses}
             description="Scheduled classes"
             icon={<CalendarDays className="h-5 w-5" />}
+            hoverColor="amber"
           />
         </div>
 
@@ -338,6 +353,7 @@ export default function ClassesPage() {
                       <h3 className="truncate text-base font-bold text-slate-900">
                         {item.code}
                       </h3>
+
                       <p className="truncate text-xs font-medium text-slate-500">
                         {item.name}
                       </p>
@@ -478,6 +494,7 @@ export default function ClassesPage() {
                   <p className="text-sm font-semibold text-slate-700">
                     {item.schedule}
                   </p>
+
                   <p className="mt-0.5 text-xs font-medium text-slate-400">
                     {item.time}
                   </p>
@@ -564,19 +581,28 @@ export default function ClassesPage() {
   );
 }
 
+/* =========================================================
+   KPI CARD
+   ========================================================= */
+
 function StatCard({
   title,
   value,
   description,
   icon,
-}: {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ReactNode;
-}) {
+  hoverColor,
+}: StatCardProps) {
+  const hoverClasses = {
+    blue: "hover:border-blue-300",
+    emerald: "hover:border-emerald-300",
+    purple: "hover:border-purple-300",
+    amber: "hover:border-amber-300",
+  };
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div
+      className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md ${hoverClasses[hoverColor]}`}
+    >
       <div className="mb-4 flex items-start justify-between">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
           {icon}
@@ -585,7 +611,9 @@ function StatCard({
         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
       </div>
 
-      <p className="text-sm font-semibold text-slate-500">{title}</p>
+      <p className="text-sm font-semibold text-slate-500">
+        {title}
+      </p>
 
       <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
         {value}
@@ -597,6 +625,10 @@ function StatCard({
     </div>
   );
 }
+
+/* =========================================================
+   DETAIL ROW
+   ========================================================= */
 
 function DetailRow({
   icon,
@@ -611,7 +643,10 @@ function DetailRow({
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2 text-slate-400">
         {icon}
-        <span className="text-xs font-semibold">{label}</span>
+
+        <span className="text-xs font-semibold">
+          {label}
+        </span>
       </div>
 
       <span className="truncate text-right text-xs font-bold text-slate-700">
@@ -621,7 +656,15 @@ function DetailRow({
   );
 }
 
-function EmptyState({ onClear }: { onClear: () => void }) {
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+function EmptyState({
+  onClear,
+}: {
+  onClear: () => void;
+}) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">

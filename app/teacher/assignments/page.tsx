@@ -16,9 +16,11 @@ import {
   Layers3,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const assignments = [
   {
+    id: "assignment-1",
     title: "Database Design Project",
     className: "BCA 3A",
     subject: "DBMS",
@@ -28,6 +30,7 @@ const assignments = [
     status: "Review",
   },
   {
+    id: "assignment-2",
     title: "React Portfolio Website",
     className: "BCA 3B",
     subject: "Web Development",
@@ -37,6 +40,7 @@ const assignments = [
     status: "Review",
   },
   {
+    id: "assignment-3",
     title: "Machine Learning Basics",
     className: "BCA 4A",
     subject: "Data Science",
@@ -50,6 +54,8 @@ const assignments = [
 export default function AssignmentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  const router = useRouter();
 
   const filtered = useMemo(() => {
     return assignments.filter((item) => {
@@ -70,17 +76,17 @@ export default function AssignmentsPage() {
   const totalAssignments = assignments.length;
 
   const pendingReview = assignments.filter(
-    (item) => item.status === "Review"
+    (item) => item.status === "Review",
   ).length;
 
   const totalSubmissions = assignments.reduce(
     (sum, item) => sum + item.submissions,
-    0
+    0,
   );
 
   const totalStudents = assignments.reduce(
     (sum, item) => sum + item.total,
-    0
+    0,
   );
 
   const completionRate =
@@ -115,9 +121,22 @@ export default function AssignmentsPage() {
             </p>
           </div>
 
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-md active:scale-[0.98]">
-            <Plus size={17} />
-            Create Assignment
+          {/* Create Assignment */}
+          <button
+            onClick={() => router.push("/teacher/assignments/new")}
+            className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200/70 active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            {/* Hover shine */}
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+            {/* Content */}
+            <span className="relative flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 transition-transform duration-200 group-hover:rotate-90">
+                <Plus size={15} strokeWidth={2.5} />
+              </span>
+
+              <span>Create Assignment</span>
+            </span>
           </button>
         </div>
 
@@ -131,6 +150,7 @@ export default function AssignmentsPage() {
             description="Active assignments"
             icon={ClipboardList}
             iconClass="bg-indigo-50 text-indigo-600"
+            hoverColor="indigo"
           />
 
           <KpiCard
@@ -139,6 +159,7 @@ export default function AssignmentsPage() {
             description="Need your attention"
             icon={Clock3}
             iconClass="bg-orange-50 text-orange-600"
+            hoverColor="orange"
             highlight
           />
 
@@ -148,6 +169,7 @@ export default function AssignmentsPage() {
             description={`Across ${assignments.length} assignments`}
             icon={FileCheck2}
             iconClass="bg-violet-50 text-violet-600"
+            hoverColor="violet"
           />
 
           <KpiCard
@@ -156,6 +178,7 @@ export default function AssignmentsPage() {
             description="Overall submission rate"
             icon={CheckCircle2}
             iconClass="bg-emerald-50 text-emerald-600"
+            hoverColor="emerald"
             progress={completionRate}
           />
         </div>
@@ -267,13 +290,13 @@ export default function AssignmentsPage() {
                     const percentage =
                       item.total > 0
                         ? Math.round(
-                            (item.submissions / item.total) * 100
+                            (item.submissions / item.total) * 100,
                           )
                         : 0;
 
                     return (
                       <tr
-                        key={item.title}
+                        key={item.id}
                         className="group border-b border-slate-100 transition last:border-0 hover:bg-slate-50/70"
                       >
                         {/* Assignment */}
@@ -378,7 +401,14 @@ export default function AssignmentsPage() {
                         {/* Action */}
                         <td className="px-5 py-4">
                           <div className="flex justify-end">
-                            <button className="group/action inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:border-indigo-100 hover:bg-indigo-50">
+                            <button
+                              onClick={() =>
+                                router.push(
+                                  `/teacher/assignments/${item.id}`,
+                                )
+                              }
+                              className="group/action inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:border-indigo-100 hover:bg-indigo-50"
+                            >
                               <Eye size={14} />
 
                               <span>Details</span>
@@ -397,10 +427,7 @@ export default function AssignmentsPage() {
                   <tr>
                     <td colSpan={6} className="px-5 py-16 text-center">
                       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                        <Search
-                          size={20}
-                          className="text-slate-400"
-                        />
+                        <Search size={20} className="text-slate-400" />
                       </div>
 
                       <h3 className="mt-3 text-sm font-semibold text-slate-800">
@@ -438,10 +465,7 @@ export default function AssignmentsPage() {
                 disabled
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-300"
               >
-                <ChevronDown
-                  size={13}
-                  className="rotate-90"
-                />
+                <ChevronDown size={13} className="rotate-90" />
                 Previous
               </button>
 
@@ -455,10 +479,7 @@ export default function AssignmentsPage() {
 
               <button className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-50">
                 Next
-                <ChevronDown
-                  size={13}
-                  className="-rotate-90"
-                />
+                <ChevronDown size={13} className="-rotate-90" />
               </button>
             </div>
           </div>
@@ -472,11 +493,7 @@ export default function AssignmentsPage() {
    TABLE HEADER
 ================================================================ */
 
-function TableHeader({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function TableHeader({ children }: { children: React.ReactNode }) {
   return (
     <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
       {children}
@@ -494,6 +511,7 @@ function KpiCard({
   description,
   icon: Icon,
   iconClass,
+  hoverColor,
   highlight,
   progress,
 }: {
@@ -502,11 +520,21 @@ function KpiCard({
   description: string;
   icon: React.ElementType;
   iconClass: string;
+  hoverColor: "indigo" | "orange" | "violet" | "emerald";
   highlight?: boolean;
   progress?: number;
 }) {
+  const hoverClasses = {
+    indigo: "hover:border-indigo-300",
+    orange: "hover:border-orange-300",
+    violet: "hover:border-violet-300",
+    emerald: "hover:border-emerald-300",
+  };
+
   return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div
+      className={`group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${hoverClasses[hoverColor]}`}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold text-slate-500">
@@ -528,9 +556,7 @@ function KpiCard({
       <div className="mt-4">
         <p
           className={`text-[11px] font-medium ${
-            highlight
-              ? "text-orange-600"
-              : "text-slate-400"
+            highlight ? "text-orange-600" : "text-slate-400"
           }`}
         >
           {description}
@@ -555,11 +581,7 @@ function KpiCard({
    STATUS BADGE
 ================================================================ */
 
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
+function StatusBadge({ status }: { status: string }) {
   const isReview = status === "Review";
 
   return (
@@ -572,9 +594,7 @@ function StatusBadge({
     >
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          isReview
-            ? "bg-orange-500"
-            : "bg-indigo-500"
+          isReview ? "bg-orange-500" : "bg-indigo-500"
         }`}
       />
 
