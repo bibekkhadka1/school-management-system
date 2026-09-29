@@ -2,18 +2,20 @@
 
 import {
   ArrowLeft,
+  Award,
+  BookOpen,
   CalendarDays,
+  Check,
   CheckCircle2,
   ClipboardList,
   FileText,
-  Upload,
-  X,
+  Info,
+  Paperclip,
   Save,
   Send,
-  BookOpen,
+  Upload,
   Users,
-  Award,
-  Info,
+  X,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -27,7 +29,8 @@ export default function NewAssignmentPage() {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [totalMarks, setTotalMarks] = useState("");
-  const [submissionType, setSubmissionType] = useState("Online Submission");
+  const [submissionType, setSubmissionType] =
+    useState("Online Submission");
   const [file, setFile] = useState<File | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,7 +53,8 @@ export default function NewAssignmentPage() {
     }
 
     if (!description.trim()) {
-      newErrors.description = "Assignment description is required.";
+      newErrors.description =
+        "Assignment description is required.";
     }
 
     if (!dueDate) {
@@ -60,7 +64,8 @@ export default function NewAssignmentPage() {
     if (!totalMarks) {
       newErrors.totalMarks = "Please enter total marks.";
     } else if (Number(totalMarks) <= 0) {
-      newErrors.totalMarks = "Total marks must be greater than 0.";
+      newErrors.totalMarks =
+        "Total marks must be greater than 0.";
     }
 
     setErrors(newErrors);
@@ -68,7 +73,9 @@ export default function NewAssignmentPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const selectedFile = event.target.files?.[0];
 
     if (selectedFile) {
@@ -80,7 +87,9 @@ export default function NewAssignmentPage() {
     setFile(null);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     if (!validateForm()) {
@@ -106,7 +115,9 @@ export default function NewAssignmentPage() {
 
     setTimeout(() => {
       setIsSaving(false);
-      setSuccessMessage("Assignment created successfully.");
+      setSuccessMessage(
+        "Assignment created successfully."
+      );
 
       setTimeout(() => {
         router.push("/teacher/assignments");
@@ -136,43 +147,95 @@ export default function NewAssignmentPage() {
     }, 1000);
   };
 
+  const inputBase =
+    "w-full rounded-xl border bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:ring-4";
+
+  const normalInput =
+    `${inputBase} border-slate-200 focus:border-indigo-400 focus:ring-indigo-50`;
+
+  const errorInput =
+    `${inputBase} border-rose-300 focus:border-rose-400 focus:ring-rose-50`;
+
   return (
-    <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
-      <div className="mx-auto w-full max-w-[1200px]">
-        {/* =========================================================
-            BACK BUTTON
-        ========================================================= */}
-        <button
-          type="button"
-          onClick={() => router.push("/teacher/assignments")}
-          className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-white hover:text-indigo-600"
-        >
-          <ArrowLeft size={15} />
-          Back to Assignments
-        </button>
+    <div className="min-h-full bg-slate-50/70 px-4 py-5 font-sans antialiased sm:px-6 lg:px-8 lg:py-7">
+      <div className="mx-auto w-full max-w-[1450px]">
 
         {/* =========================================================
-            HEADER
+            TOP NAVIGATION
         ========================================================= */}
-        <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() =>
+              router.push("/teacher/assignments")
+            }
+            className="group inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-white hover:text-indigo-600"
+          >
+            <ArrowLeft
+              size={15}
+              className="transition-transform group-hover:-translate-x-0.5"
+            />
+            Back to Assignments
+          </button>
+
+          <div className="hidden items-center gap-2 text-[11px] font-semibold text-slate-400 sm:flex">
+            <span>Assignments</span>
+            <span>/</span>
+            <span className="text-slate-600">
+              Create Assignment
+            </span>
+          </div>
+        </div>
+
+        {/* =========================================================
+            PAGE HEADER
+        ========================================================= */}
+        <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 shadow-sm shadow-indigo-200">
-                <ClipboardList size={18} className="text-white" />
+            <div className="mb-3 flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-200">
+                <ClipboardList
+                  size={19}
+                  className="text-white"
+                />
               </div>
 
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
-                Academic Management
-              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
+                  Academic Management
+                </p>
+                <p className="mt-0.5 text-[11px] font-medium text-slate-400">
+                  Assignment workspace
+                </p>
+              </div>
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Create Assignment
             </h1>
 
-            <p className="mt-1 text-sm font-medium text-slate-500">
-              Create and publish a new assignment for your students.
+            <p className="mt-1.5 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+              Create, configure and publish a new assignment
+              for your students.
             </p>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-sm">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50">
+              <FileText
+                size={14}
+                className="text-indigo-600"
+              />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Status
+              </p>
+              <p className="text-xs font-bold text-slate-700">
+                Draft in progress
+              </p>
+            </div>
           </div>
         </div>
 
@@ -180,9 +243,22 @@ export default function NewAssignmentPage() {
             SUCCESS MESSAGE
         ========================================================= */}
         {successMessage && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            <CheckCircle2 size={18} />
-            {successMessage}
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 shadow-sm">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2
+                size={16}
+                className="text-emerald-600"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm font-bold text-emerald-800">
+                {successMessage}
+              </p>
+              <p className="mt-0.5 text-[11px] font-medium text-emerald-600">
+                Your assignment information has been saved.
+              </p>
+            </div>
           </div>
         )}
 
@@ -190,89 +266,99 @@ export default function NewAssignmentPage() {
             FORM
         ========================================================= */}
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_350px]">
+
             {/* =====================================================
-                MAIN FORM
+                MAIN CONTENT
             ===================================================== */}
             <div className="space-y-6">
-              {/* Basic Information */}
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-6 py-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                      <BookOpen size={17} />
-                    </div>
 
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">
-                        Basic Information
-                      </h2>
+              {/* ===================================================
+                  BASIC INFORMATION
+              =================================================== */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <SectionHeader
+                  icon={<BookOpen size={17} />}
+                  iconClass="bg-indigo-50 text-indigo-600"
+                  title="Basic Information"
+                  description="Enter the main details of your assignment."
+                />
 
-                      <p className="mt-0.5 text-xs font-medium text-slate-400">
-                        Enter the main details of your assignment.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <div className="space-y-5 p-5 sm:p-6">
 
-                <div className="space-y-5 p-6">
                   {/* Assignment Title */}
                   <div>
-                    <label
+                    <FieldLabel
                       htmlFor="title"
-                      className="mb-2 block text-xs font-semibold text-slate-700"
-                    >
-                      Assignment Title
-                      <span className="ml-1 text-rose-500">*</span>
-                    </label>
+                      label="Assignment Title"
+                      required
+                    />
 
                     <input
                       id="title"
                       type="text"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        if (errors.title) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            title: "",
+                          }));
+                        }
+                      }}
                       placeholder="e.g. Database Design Project"
-                      className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-2 ${
+                      className={`h-11.5 ${
                         errors.title
-                          ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                          : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
+                          ? errorInput
+                          : normalInput
                       }`}
                     />
 
                     {errors.title && (
-                      <p className="mt-1.5 text-[11px] font-medium text-rose-500">
+                      <ErrorMessage>
                         {errors.title}
-                      </p>
+                      </ErrorMessage>
                     )}
                   </div>
 
                   {/* Subject + Class */}
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
-                      <label
+                      <FieldLabel
                         htmlFor="subject"
-                        className="mb-2 block text-xs font-semibold text-slate-700"
-                      >
-                        Subject
-                        <span className="ml-1 text-rose-500">*</span>
-                      </label>
+                        label="Subject"
+                        required
+                      />
 
                       <select
                         id="subject"
                         value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 ${
+                        onChange={(e) => {
+                          setSubject(e.target.value);
+                          if (errors.subject) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              subject: "",
+                            }));
+                          }
+                        }}
+                        className={`h-11.5 ${
                           errors.subject
-                            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                            : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
+                            ? errorInput
+                            : normalInput
                         }`}
                       >
-                        <option value="">Select subject</option>
+                        <option value="">
+                          Select subject
+                        </option>
                         <option value="DBMS">DBMS</option>
                         <option value="Web Development">
                           Web Development
                         </option>
-                        <option value="Data Science">Data Science</option>
+                        <option value="Data Science">
+                          Data Science
+                        </option>
                         <option value="Computer Networks">
                           Computer Networks
                         </option>
@@ -285,161 +371,186 @@ export default function NewAssignmentPage() {
                       </select>
 
                       {errors.subject && (
-                        <p className="mt-1.5 text-[11px] font-medium text-rose-500">
+                        <ErrorMessage>
                           {errors.subject}
-                        </p>
+                        </ErrorMessage>
                       )}
                     </div>
 
                     <div>
-                      <label
+                      <FieldLabel
                         htmlFor="class"
-                        className="mb-2 block text-xs font-semibold text-slate-700"
-                      >
-                        Class
-                        <span className="ml-1 text-rose-500">*</span>
-                      </label>
+                        label="Class"
+                        required
+                      />
 
                       <select
                         id="class"
                         value={className}
-                        onChange={(e) => setClassName(e.target.value)}
-                        className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 ${
+                        onChange={(e) => {
+                          setClassName(e.target.value);
+                          if (errors.className) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              className: "",
+                            }));
+                          }
+                        }}
+                        className={`h-11.5 ${
                           errors.className
-                            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                            : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
+                            ? errorInput
+                            : normalInput
                         }`}
                       >
-                        <option value="">Select class</option>
-                        <option value="BCA 3A">BCA 3A</option>
-                        <option value="BCA 3B">BCA 3B</option>
-                        <option value="BCA 4A">BCA 4A</option>
-                        <option value="CSIT 5A">CSIT 5A</option>
-                        <option value="BIT 2A">BIT 2A</option>
-                        <option value="BCA 6A">BCA 6A</option>
+                        <option value="">
+                          Select class
+                        </option>
+                        <option value="BCA 3A">
+                          BCA 3A
+                        </option>
+                        <option value="BCA 3B">
+                          BCA 3B
+                        </option>
+                        <option value="BCA 4A">
+                          BCA 4A
+                        </option>
+                        <option value="CSIT 5A">
+                          CSIT 5A
+                        </option>
+                        <option value="BIT 2A">
+                          BIT 2A
+                        </option>
+                        <option value="BCA 6A">
+                          BCA 6A
+                        </option>
                       </select>
 
                       {errors.className && (
-                        <p className="mt-1.5 text-[11px] font-medium text-rose-500">
+                        <ErrorMessage>
                           {errors.className}
-                        </p>
+                        </ErrorMessage>
                       )}
                     </div>
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label
+                    <FieldLabel
                       htmlFor="description"
-                      className="mb-2 block text-xs font-semibold text-slate-700"
-                    >
-                      Description & Instructions
-                      <span className="ml-1 text-rose-500">*</span>
-                    </label>
-
-                    <textarea
-                      id="description"
-                      rows={7}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Write the assignment instructions, requirements, learning objectives, and any other information students need to know..."
-                      className={`w-full resize-none rounded-lg border bg-white px-3.5 py-3 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:ring-2 ${
-                        errors.description
-                          ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                          : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
-                      }`}
+                      label="Description & Instructions"
+                      required
                     />
 
-                    <div className="mt-1.5 flex items-center justify-between">
-                      {errors.description ? (
-                        <p className="text-[11px] font-medium text-rose-500">
-                          {errors.description}
-                        </p>
-                      ) : (
-                        <p className="text-[11px] font-medium text-slate-400">
-                          Provide clear instructions for your students.
-                        </p>
-                      )}
+                    <div
+                      className={`overflow-hidden rounded-xl border bg-white transition focus-within:ring-4 ${
+                        errors.description
+                          ? "border-rose-300 focus-within:border-rose-400 focus-within:ring-rose-50"
+                          : "border-slate-200 focus-within:border-indigo-400 focus-within:ring-indigo-50"
+                      }`}
+                    >
+                      <textarea
+                        id="description"
+                        rows={7}
+                        value={description}
+                        onChange={(e) => {
+                          setDescription(
+                            e.target.value
+                          );
 
-                      <span className="text-[10px] font-medium text-slate-400">
-                        {description.length} characters
-                      </span>
+                          if (errors.description) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              description: "",
+                            }));
+                          }
+                        }}
+                        placeholder="Write the assignment instructions, requirements, learning objectives, and any other information students need to know..."
+                        className="block w-full resize-none border-0 bg-transparent px-3.5 py-3 text-sm font-medium leading-6 text-slate-700 outline-none placeholder:text-slate-400 focus:ring-0"
+                      />
+
+                      <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-3.5 py-2">
+                        <span className="text-[10px] font-medium text-slate-400">
+                          {errors.description
+                            ? errors.description
+                            : "Provide clear instructions for your students."}
+                        </span>
+
+                        <span className="shrink-0 text-[10px] font-semibold text-slate-400">
+                          {description.length} characters
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* Assignment Settings */}
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-6 py-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                      <CalendarDays size={17} />
-                    </div>
+              {/* ===================================================
+                  ASSIGNMENT SETTINGS
+              =================================================== */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <SectionHeader
+                  icon={<CalendarDays size={17} />}
+                  iconClass="bg-emerald-50 text-emerald-600"
+                  title="Assignment Settings"
+                  description="Configure deadline, marks and submission options."
+                />
 
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">
-                        Assignment Settings
-                      </h2>
+                <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
 
-                      <p className="mt-0.5 text-xs font-medium text-slate-400">
-                        Configure deadline, marks and submission options.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 p-6 sm:grid-cols-2">
                   {/* Due Date */}
                   <div>
-                    <label
+                    <FieldLabel
                       htmlFor="dueDate"
-                      className="mb-2 block text-xs font-semibold text-slate-700"
-                    >
-                      Due Date
-                      <span className="ml-1 text-rose-500">*</span>
-                    </label>
+                      label="Due Date"
+                      required
+                    />
 
                     <div className="relative">
                       <CalendarDays
                         size={16}
-                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                       />
 
                       <input
                         id="dueDate"
                         type="date"
                         value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                        className={`h-11 w-full rounded-lg border bg-white pl-10 pr-3.5 text-sm font-medium text-slate-700 outline-none transition focus:ring-2 ${
+                        onChange={(e) => {
+                          setDueDate(e.target.value);
+                          if (errors.dueDate) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              dueDate: "",
+                            }));
+                          }
+                        }}
+                        className={`h-11.5 pl-10 ${
                           errors.dueDate
-                            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                            : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
+                            ? errorInput
+                            : normalInput
                         }`}
                       />
                     </div>
 
                     {errors.dueDate && (
-                      <p className="mt-1.5 text-[11px] font-medium text-rose-500">
+                      <ErrorMessage>
                         {errors.dueDate}
-                      </p>
+                      </ErrorMessage>
                     )}
                   </div>
 
                   {/* Total Marks */}
                   <div>
-                    <label
+                    <FieldLabel
                       htmlFor="totalMarks"
-                      className="mb-2 block text-xs font-semibold text-slate-700"
-                    >
-                      Total Marks
-                      <span className="ml-1 text-rose-500">*</span>
-                    </label>
+                      label="Total Marks"
+                      required
+                    />
 
                     <div className="relative">
                       <Award
                         size={16}
-                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                       />
 
                       <input
@@ -447,93 +558,131 @@ export default function NewAssignmentPage() {
                         type="number"
                         min="1"
                         value={totalMarks}
-                        onChange={(e) => setTotalMarks(e.target.value)}
+                        onChange={(e) => {
+                          setTotalMarks(
+                            e.target.value
+                          );
+
+                          if (errors.totalMarks) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              totalMarks: "",
+                            }));
+                          }
+                        }}
                         placeholder="e.g. 100"
-                        className={`h-11 w-full rounded-lg border bg-white pl-10 pr-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                        className={`h-11.5 pl-10 ${
                           errors.totalMarks
-                            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                            : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
+                            ? errorInput
+                            : normalInput
                         }`}
                       />
                     </div>
 
                     {errors.totalMarks && (
-                      <p className="mt-1.5 text-[11px] font-medium text-rose-500">
+                      <ErrorMessage>
                         {errors.totalMarks}
-                      </p>
+                      </ErrorMessage>
                     )}
                   </div>
 
                   {/* Submission Type */}
                   <div className="sm:col-span-2">
-                    <label
+                    <FieldLabel
                       htmlFor="submissionType"
-                      className="mb-2 block text-xs font-semibold text-slate-700"
-                    >
-                      Submission Type
-                    </label>
+                      label="Submission Type"
+                    />
 
                     <select
                       id="submissionType"
                       value={submissionType}
-                      onChange={(e) => setSubmissionType(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                      onChange={(e) =>
+                        setSubmissionType(
+                          e.target.value
+                        )
+                      }
+                      className={`${normalInput} h-11.5`}
                     >
                       <option value="Online Submission">
                         Online Submission
                       </option>
-                      <option value="File Upload">File Upload</option>
-                      <option value="Text Submission">Text Submission</option>
+                      <option value="File Upload">
+                        File Upload
+                      </option>
+                      <option value="Text Submission">
+                        Text Submission
+                      </option>
                       <option value="Online + File Upload">
                         Online + File Upload
                       </option>
-                      <option value="Offline">Offline</option>
+                      <option value="Offline">
+                        Offline
+                      </option>
                     </select>
+
+                    <p className="mt-2 text-[10px] font-medium text-slate-400">
+                      Select how students should submit their work.
+                    </p>
                   </div>
                 </div>
               </section>
 
-              {/* Attachment */}
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-6 py-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                      <FileText size={17} />
-                    </div>
+              {/* ===================================================
+                  ATTACHMENT
+              =================================================== */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <SectionHeader
+                  icon={<FileText size={17} />}
+                  iconClass="bg-violet-50 text-violet-600"
+                  title="Assignment Material"
+                  description="Optionally attach instructions, references or resources."
+                />
 
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">
-                        Assignment Material
-                      </h2>
-
-                      <p className="mt-0.5 text-xs font-medium text-slate-400">
-                        Optionally attach instructions, references or resources.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
+                <div className="p-5 sm:p-6">
                   {!file ? (
                     <label
                       htmlFor="attachment"
-                      className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center transition hover:border-indigo-300 hover:bg-indigo-50/30"
+                      className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 px-6 py-11 text-center transition hover:border-indigo-300 hover:bg-indigo-50/30"
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                        <Upload size={19} />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200 transition group-hover:scale-105 group-hover:ring-indigo-200">
+                        <Upload size={20} />
                       </div>
 
-                      <p className="mt-3 text-sm font-semibold text-slate-700">
+                      <p className="mt-4 text-sm font-bold text-slate-700">
                         Upload assignment material
                       </p>
 
-                      <p className="mt-1 text-xs font-medium text-slate-400">
-                        PDF, DOC, DOCX, PPT, PPTX or ZIP up to 10MB
+                      <p className="mt-1 max-w-md text-xs font-medium leading-5 text-slate-400">
+                        Drag and drop your file here or
+                        choose a file from your computer.
                       </p>
 
-                      <span className="mt-4 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 shadow-sm">
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        {[
+                          "PDF",
+                          "DOC",
+                          "DOCX",
+                          "PPT",
+                          "PPTX",
+                          "ZIP",
+                        ].map((type) => (
+                          <span
+                            key={type}
+                            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold text-slate-500"
+                          >
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+
+                      <span className="mt-5 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-200 transition group-hover:bg-indigo-700">
+                        <Paperclip size={14} />
                         Choose File
                       </span>
+
+                      <p className="mt-3 text-[10px] font-medium text-slate-400">
+                        Maximum file size: 10MB
+                      </p>
 
                       <input
                         id="attachment"
@@ -544,30 +693,41 @@ export default function NewAssignmentPage() {
                       />
                     </label>
                   ) : (
-                    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                          <FileText size={18} />
+                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+                            <FileText size={19} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-700">
+                              {file.name}
+                            </p>
+
+                            <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                              {(file.size / 1024 / 1024).toFixed(
+                                2
+                              )}{" "}
+                              MB
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-700">
-                            {file.name}
-                          </p>
-
-                          <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={removeFile}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 transition hover:bg-rose-50 hover:text-rose-500 hover:ring-rose-200"
+                          aria-label="Remove attachment"
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={removeFile}
-                        className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
-                      >
-                        <X size={16} />
-                      </button>
+                      <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold text-indigo-600">
+                        <Check size={13} />
+                        Attachment ready to publish
+                      </div>
                     </div>
                   )}
                 </div>
@@ -575,66 +735,91 @@ export default function NewAssignmentPage() {
             </div>
 
             {/* =====================================================
-                SIDE PANEL
+                RIGHT SIDEBAR
             ===================================================== */}
-            <div className="space-y-6">
-              {/* Publishing Card */}
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:sticky lg:top-6">
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <h2 className="text-sm font-bold text-slate-900">
-                    Publish Assignment
-                  </h2>
+            <aside className="space-y-6">
 
-                  <p className="mt-0.5 text-xs font-medium text-slate-400">
-                    Review before publishing.
-                  </p>
+              {/* ===================================================
+                  PUBLISH CARD
+              =================================================== */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:sticky xl:top-6">
+                <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 shadow-sm">
+                      <Send
+                        size={16}
+                        className="text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">
+                        Publish Assignment
+                      </h2>
+                      <p className="mt-0.5 text-[10px] font-medium text-slate-400">
+                        Review and publish when ready.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-5">
-                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+
+                  {/* Information */}
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
                     <div className="flex gap-3">
-                      <Info
-                        size={17}
-                        className="mt-0.5 shrink-0 text-indigo-600"
-                      />
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                        <Info
+                          size={15}
+                          className="text-indigo-600"
+                        />
+                      </div>
 
                       <div>
-                        <p className="text-xs font-semibold text-indigo-700">
+                        <p className="text-xs font-bold text-indigo-800">
                           Before you publish
                         </p>
 
-                        <p className="mt-1 text-[11px] font-medium leading-5 text-indigo-600/80">
-                          Make sure the class, due date, marks and instructions
-                          are correct. Students will be able to see the
+                        <p className="mt-1 text-[10px] font-medium leading-5 text-indigo-600/80">
+                          Make sure the class, due date,
+                          marks and instructions are correct.
+                          Students will be able to see the
                           assignment after publishing.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-5 space-y-3">
+                  {/* Action Buttons */}
+                  <div className="mt-5 space-y-2.5">
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex h-11.5 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <Send size={16} />
-                      {isSaving ? "Publishing..." : "Publish Assignment"}
+                      <Send size={15} />
+                      {isSaving
+                        ? "Publishing..."
+                        : "Publish Assignment"}
                     </button>
 
                     <button
                       type="button"
                       onClick={handleSaveDraft}
-                      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                      className="flex h-11.5 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
                     >
-                      <Save size={16} />
+                      <Save size={15} />
                       Save as Draft
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => router.push("/teacher/assignments")}
-                      className="flex h-10 w-full items-center justify-center rounded-xl px-4 text-xs font-semibold text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                      onClick={() =>
+                        router.push(
+                          "/teacher/assignments"
+                        )
+                      }
+                      className="flex h-10 w-full items-center justify-center rounded-xl px-4 text-xs font-bold text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
                     >
                       Cancel
                     </button>
@@ -642,15 +827,27 @@ export default function NewAssignmentPage() {
                 </div>
               </section>
 
-              {/* Assignment Preview */}
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+              {/* ===================================================
+                  ASSIGNMENT SUMMARY
+              =================================================== */}
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-4">
-                  <div className="flex items-center gap-2">
-                    <Users size={16} className="text-slate-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                      <Users
+                        size={15}
+                        className="text-slate-500"
+                      />
+                    </div>
 
-                    <h2 className="text-sm font-bold text-slate-900">
-                      Assignment Summary
-                    </h2>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">
+                        Assignment Summary
+                      </h2>
+                      <p className="mt-0.5 text-[10px] font-medium text-slate-400">
+                        Live overview of your assignment.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -658,34 +855,179 @@ export default function NewAssignmentPage() {
                   <SummaryRow
                     label="Class"
                     value={className || "Not selected"}
+                    icon={<Users size={13} />}
                   />
 
                   <SummaryRow
                     label="Subject"
                     value={subject || "Not selected"}
+                    icon={<BookOpen size={13} />}
                   />
 
                   <SummaryRow
                     label="Due Date"
                     value={dueDate || "Not selected"}
+                    icon={<CalendarDays size={13} />}
                   />
 
                   <SummaryRow
                     label="Total Marks"
                     value={totalMarks || "Not set"}
+                    icon={<Award size={13} />}
                   />
 
                   <SummaryRow
                     label="Submission"
                     value={submissionType}
+                    icon={<FileText size={13} />}
                   />
                 </div>
               </section>
-            </div>
+
+              {/* ===================================================
+                  COMPLETION CARD
+              =================================================== */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Form Progress
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-800">
+                      {getCompletionPercentage({
+                        title,
+                        subject,
+                        className,
+                        description,
+                        dueDate,
+                        totalMarks,
+                      })}
+                      % complete
+                    </p>
+                  </div>
+
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-600">
+                    {getCompletionPercentage({
+                      title,
+                      subject,
+                      className,
+                      description,
+                      dueDate,
+                      totalMarks,
+                    })}
+                    %
+                  </div>
+                </div>
+
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+                    style={{
+                      width: `${getCompletionPercentage({
+                        title,
+                        subject,
+                        className,
+                        description,
+                        dueDate,
+                        totalMarks,
+                      })}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-3 text-[10px] font-medium leading-5 text-slate-400">
+                  Complete all required fields before
+                  publishing your assignment.
+                </p>
+              </section>
+            </aside>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+/* ================================================================
+   SECTION HEADER
+================================================================ */
+
+function SectionHeader({
+  icon,
+  iconClass,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  iconClass: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="border-b border-slate-100 px-5 py-4.5 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconClass}`}
+        >
+          {icon}
+        </div>
+
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">
+            {title}
+          </h2>
+
+          <p className="mt-0.5 text-[10px] font-medium leading-5 text-slate-400">
+            {description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   FIELD LABEL
+================================================================ */
+
+function FieldLabel({
+  htmlFor,
+  label,
+  required = false,
+}: {
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="mb-2 block text-xs font-bold text-slate-700"
+    >
+      {label}
+
+      {required && (
+        <span className="ml-1 text-rose-500">
+          *
+        </span>
+      )}
+    </label>
+  );
+}
+
+/* ================================================================
+   ERROR MESSAGE
+================================================================ */
+
+function ErrorMessage({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <p className="mt-1.5 text-[10px] font-semibold text-rose-500">
+      {children}
+    </p>
   );
 }
 
@@ -696,19 +1038,62 @@ export default function NewAssignmentPage() {
 function SummaryRow({
   label,
   value,
+  icon,
 }: {
   label: string;
   value: string;
+  icon: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-      <span className="text-[11px] font-semibold text-slate-400">
-        {label}
-      </span>
+    <div className="flex items-center gap-3 px-5 py-3.5">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+        {icon}
+      </div>
 
-      <span className="max-w-[180px] truncate text-right text-xs font-semibold text-slate-700">
-        {value}
-      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold text-slate-400">
+          {label}
+        </p>
+
+        <p className="mt-0.5 truncate text-xs font-bold text-slate-700">
+          {value}
+        </p>
+      </div>
     </div>
+  );
+}
+
+/* ================================================================
+   COMPLETION CALCULATION
+================================================================ */
+
+function getCompletionPercentage({
+  title,
+  subject,
+  className,
+  description,
+  dueDate,
+  totalMarks,
+}: {
+  title: string;
+  subject: string;
+  className: string;
+  description: string;
+  dueDate: string;
+  totalMarks: string;
+}) {
+  const fields = [
+    title.trim(),
+    subject,
+    className,
+    description.trim(),
+    dueDate,
+    totalMarks,
+  ];
+
+  const completed = fields.filter(Boolean).length;
+
+  return Math.round(
+    (completed / fields.length) * 100
   );
 }

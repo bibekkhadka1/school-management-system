@@ -1,706 +1,712 @@
 "use client";
 
+import Link from "next/link";
 import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Mail,
   Search,
   Users,
-  Eye,
-  UserCheck,
-  Award,
-  TrendingUp,
-  LayoutGrid,
-  List,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Mail,
-  MoreVertical,
-  X,
-  GraduationCap,
 } from "lucide-react";
-import { useState, useMemo } from "react";
 
-// Expanded Mock Student Data
-const students = [
-  {
-    id: "STU-001",
-    name: "Aarav Sharma",
-    className: "BCA 3A",
-    roll: "01",
-    attendance: 94,
-    email: "aarav@example.com",
-    avatar: "AS",
-  },
-  {
-    id: "STU-002",
-    name: "Priya Thapa",
-    className: "BCA 3A",
-    roll: "02",
-    attendance: 91,
-    email: "priya@example.com",
-    avatar: "PT",
-  },
-  {
-    id: "STU-003",
-    name: "Sujan KC",
-    className: "BCA 3B",
-    roll: "15",
-    attendance: 87,
-    email: "sujan@example.com",
-    avatar: "SK",
-  },
-  {
-    id: "STU-004",
-    name: "Anisha Rai",
-    className: "BCA 4A",
-    roll: "08",
-    attendance: 96,
-    email: "anisha@example.com",
-    avatar: "AR",
-  },
-  {
-    id: "STU-005",
-    name: "Rohan Shrestha",
-    className: "BCA 3B",
-    roll: "22",
-    attendance: 78,
-    email: "rohan@example.com",
-    avatar: "RS",
-  },
-  {
-    id: "STU-006",
-    name: "Kavya Joshi",
-    className: "BCA 4A",
-    roll: "12",
-    attendance: 92,
-    email: "kavya@example.com",
-    avatar: "KJ",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+
+/* --------------------------------
+   API Student Type
+--------------------------------- */
+
+// This represents the student data coming from PostgreSQL
+// through our Express /api/students endpoint.
+type StudentFromAPI = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  roll_no: string;
+  status: "Active" | "Inactive";
+  location: string | null;
+  created_at: string;
+};
+
+/* --------------------------------
+   Frontend Student Type
+--------------------------------- */
+
+// This is the structure used by our existing UI.
+//
+// className and attendance are temporary because
+// we have not created the Classes and Attendance tables yet.
+type Student = {
+  id: number;
+  name: string;
+  email: string;
+  rollNo: string;
+  className: string;
+  attendance: number;
+  status: "Active" | "Inactive";
+};
 
 export default function StudentsPage() {
+  // Search box value
   const [search, setSearch] = useState("");
-  const [classFilter, setClassFilter] = useState("All");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+
+  // Stores students received from our backend API
+  const [studentsFromAPI, setStudentsFromAPI] = useState<StudentFromAPI[]>(
+    [],
+  );
+
+  // Shows a loading state while the API request is running
+  const [loading, setLoading] = useState(true);
+
+  // Stores an error message if the API request fails
+  const [error, setError] = useState("");
+
+  // Currently selected class filter
+  const [selectedClass, setSelectedClass] = useState("All");
+
+  // Current pagination page
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalStudentsCount = 24;
+  // Number of students displayed on each page
+  const studentsPerPage = 6;
 
-  const classOptions = useMemo(() => {
-    return [
-      "All",
-      ...Array.from(new Set(students.map((s) => s.className))),
-    ];
+  /* --------------------------------
+     Fetch Students From Backend
+  --------------------------------- */
+
+  useEffect(() => {
+    // Fetch students from our Express backend
+    const fetchStudents = async () => {
+      try {
+        // Call the backend API
+        const response = await fetch("http://localhost:5000/api/students");
+
+        // Check if the backend returned a successful response
+        if (!response.ok) {
+          throw new Error("Failed to fetch students");
+        }
+
+        // Convert the JSON response into JavaScript data
+        const data: StudentFromAPI[] = await response.json();
+
+        // Store the database students in React state
+        setStudentsFromAPI(data);
+      } catch (error) {
+        // Show the actual error in the browser console
+        console.error("Failed to load students:", error);
+
+        // Store a user-friendly error message
+        setError("Failed to load students.");
+      } finally {
+        // Loading is finished
+        setLoading(false);
+      }
+    };
+
+    // Run the API request when the page loads
+    fetchStudents();
   }, []);
 
-  const filteredStudents = students.filter((student) => {
-    const query = search.toLowerCase();
+  /* --------------------------------
+     Convert API Data To UI Data
+  --------------------------------- */
 
-    const matchesSearch =
-      student.name.toLowerCase().includes(query) ||
-      student.id.toLowerCase().includes(query) ||
-      student.email.toLowerCase().includes(query);
+  // PostgreSQL uses names such as first_name and roll_no,
+  // while our existing frontend uses name and rollNo.
+  //
+  // So we convert the database format into the format
+  // expected by our existing UI.
+  const students: Student[] = useMemo(() => {
+    return studentsFromAPI.map((student) => ({
+      id: student.id,
 
-    const matchesClass =
-      classFilter === "All" || student.className === classFilter;
+      // Combine first and last name
+      name: `${student.first_name} ${student.last_name}`,
 
-    return matchesSearch && matchesClass;
-  });
+      // Email comes directly from PostgreSQL
+      email: student.email,
 
-  const averageAttendance = Math.round(
-    students.reduce((acc, curr) => acc + curr.attendance, 0) /
-      students.length
+      // Convert roll_no to rollNo
+      rollNo: student.roll_no,
+
+      // Temporary value until we create the Classes table
+      className: "Not assigned",
+
+      // Temporary value until we create the Attendance table
+      attendance: 0,
+
+      // Status comes directly from PostgreSQL
+      status: student.status,
+    }));
+  }, [studentsFromAPI]);
+
+  /* --------------------------------
+     Class Filter Options
+  --------------------------------- */
+
+  // Create the class dropdown options
+  //
+  // Currently all students are "Not assigned"
+  // because we haven't created class relationships yet.
+  const classes = [
+    "All",
+    ...Array.from(new Set(students.map((s) => s.className))),
+  ];
+
+  /* --------------------------------
+     Search + Class Filtering
+  --------------------------------- */
+
+  const filteredStudents = useMemo(() => {
+    // Convert search text to lowercase
+    const query = search.trim().toLowerCase();
+
+    // Filter students based on search and class
+    return students.filter((student) => {
+      // Search by student name, email, or roll number
+      const matchesSearch =
+        !query ||
+        student.name.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query) ||
+        student.rollNo.toLowerCase().includes(query);
+
+      // Check selected class
+      const matchesClass =
+        selectedClass === "All" || student.className === selectedClass;
+
+      return matchesSearch && matchesClass;
+    });
+  }, [students, search, selectedClass]);
+
+  /* --------------------------------
+     Statistics
+  --------------------------------- */
+
+  // Total number of students
+  const totalStudents = students.length;
+
+  // Count only Active students
+  const activeStudents = students.filter(
+    (student) => student.status === "Active",
+  ).length;
+
+  // Calculate average attendance
+  //
+  // This will currently be 0 because attendance
+  // has not been added to the database yet.
+  const averageAttendance =
+    students.length > 0
+      ? Math.round(
+          students.reduce((sum, student) => sum + student.attendance, 0) /
+            students.length,
+        )
+      : 0;
+
+  /* --------------------------------
+     Pagination
+  --------------------------------- */
+
+  // Calculate total pages
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStudents.length / studentsPerPage),
   );
+
+  // Prevent current page from exceeding total pages
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  // Get students for the current page
+  const paginatedStudents = filteredStudents.slice(
+    (safeCurrentPage - 1) * studentsPerPage,
+    safeCurrentPage * studentsPerPage,
+  );
+
+  /* --------------------------------
+     Search Handler
+  --------------------------------- */
+
+  const handleSearch = (value: string) => {
+    // Update search value
+    setSearch(value);
+
+    // Go back to page 1
+    setCurrentPage(1);
+  };
+
+  /* --------------------------------
+     Class Filter Handler
+  --------------------------------- */
+
+  const handleClassChange = (value: string) => {
+    // Update selected class
+    setSelectedClass(value);
+
+    // Go back to page 1
+    setCurrentPage(1);
+  };
+
+  /* --------------------------------
+     Loading State
+  --------------------------------- */
+
+  // Display this while students are being fetched
+  if (loading) {
+    return (
+      <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
+        <div className="mx-auto flex min-h-[400px] max-w-[1500px] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600" />
+
+            <p className="mt-4 text-sm font-semibold text-gray-600">
+              Loading students...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* --------------------------------
+     Error State
+  --------------------------------- */
+
+  // Display this if the backend API cannot be reached
+  if (error) {
+    return (
+      <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
+        <div className="mx-auto flex min-h-[400px] max-w-[1500px] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+              <Users className="h-6 w-6" />
+            </div>
+
+            <h2 className="mt-4 text-base font-bold text-gray-900">
+              Unable to load students
+            </h2>
+
+            <p className="mt-1 text-sm font-medium text-gray-500">
+              {error}
+            </p>
+
+            <p className="mt-2 text-xs font-medium text-gray-400">
+              Make sure your backend server is running on port 5000.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* --------------------------------
+     Main Page
+  --------------------------------- */
 
   return (
     <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-[1500px] space-y-6">
 
-        {/* =========================================================
-            PAGE HEADER
-        ========================================================= */}
-        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        {/* Header */}
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
-                <GraduationCap size={21} />
-              </div>
-
-              <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                  Students Roster
-                </h1>
-
-                <p className="mt-0.5 text-sm font-medium text-slate-500">
-                  Manage student profiles, attendance and academic standings.
-                </p>
-              </div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-indigo-600">
+              <Users className="h-4 w-4" />
+              Student Management
             </div>
+
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              Students
+            </h1>
+
+            <p className="mt-1 text-sm font-medium text-gray-500">
+              Manage student profiles, attendance and academic information.
+            </p>
           </div>
         </div>
 
-        {/* =========================================================
-            KPI CARDS
-        ========================================================= */}
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Stats */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            icon={<Users className="h-5 w-5" />}
+            label="Total Students"
+            value={totalStudents}
+            description="Students across classes"
+            hoverColor="blue"
+          />
 
-          {/* Total Students */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Enrolled
-                </p>
+          <StatCard
+            icon={<CheckCircle2 className="h-5 w-5" />}
+            label="Active Students"
+            value={activeStudents}
+            description="Currently enrolled"
+            hoverColor="emerald"
+          />
 
-                <div className="mt-2 flex items-end gap-2">
-                  <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                    {totalStudentsCount}
-                  </span>
+          <StatCard
+            icon={<BookOpen className="h-5 w-5" />}
+            label="Classes"
+            value={classes.length - 1}
+            description="Active class sections"
+            hoverColor="purple"
+          />
 
-                  <span className="mb-1 text-[11px] font-bold text-emerald-600">
-                    Active
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <Users size={21} />
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] font-medium text-slate-500">
-              <span className="flex items-center gap-1 font-bold text-emerald-600">
-                <TrendingUp size={13} />
-                +8%
-              </span>
-
-              new admissions this semester
-            </div>
-          </div>
-
-          {/* Attendance */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Average Attendance
-                </p>
-
-                <div className="mt-2 flex items-end gap-2">
-                  <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                    {averageAttendance}%
-                  </span>
-
-                  <span className="mb-1 text-[11px] font-bold text-emerald-600">
-                    High Rate
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                <UserCheck size={21} />
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] font-medium text-slate-500">
-              <span className="font-bold text-emerald-600">
-                Optimal
-              </span>
-
-              across all assigned sections
-            </div>
-          </div>
-
-          {/* Top Section */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-purple-300 hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Top Performing Section
-                </p>
-
-                <div className="mt-2 flex items-end gap-2">
-                  <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                    BCA 4A
-                  </span>
-
-                  <span className="mb-1 text-[11px] font-bold text-purple-600">
-                    94% Avg
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                <Award size={21} />
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] font-medium text-slate-500">
-              <span className="font-bold text-purple-600">
-                Highest Engagement
-              </span>
-
-              in recent lectures
-            </div>
-          </div>
+          <StatCard
+            icon={<CalendarDays className="h-5 w-5" />}
+            label="Avg. Attendance"
+            value={`${averageAttendance}%`}
+            description="Across all students"
+            hoverColor="amber"
+          />
         </div>
 
-        {/* =========================================================
-            STUDENT DIRECTORY
-        ========================================================= */}
-        <section>
+        {/* Student Directory */}
+        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-          {/* Section Heading */}
-          <div className="mb-4 flex items-center justify-between">
+          {/* Directory Header */}
+          <div className="flex flex-col justify-between gap-4 border-b border-gray-200 px-6 py-5 lg:flex-row lg:items-center">
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">
+              <h2 className="text-base font-bold text-gray-900">
                 Student Directory
               </h2>
 
-              <p className="mt-0.5 text-xs font-medium text-slate-500">
-                View student profiles, classes and attendance performance.
+              <p className="mt-1 text-sm font-medium text-gray-500">
+                View and manage enrolled student profiles.
               </p>
             </div>
 
-            <span className="hidden rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-600 sm:block">
-              {filteredStudents.length} students
-            </span>
-          </div>
-
-          {/* =======================================================
-              TOOLBAR
-          ======================================================= */}
-          <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row">
 
               {/* Search */}
-              <div className="relative w-full xl:max-w-sm">
-                <Search
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
                   type="text"
-                  placeholder="Search students, ID or email..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-10 pr-9 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10"
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="Search students..."
+                  className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-4 text-sm font-medium text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 sm:w-64"
                 />
-
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
               </div>
 
-              {/* Filters */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-
-                {/* Class Filter */}
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                  <Filter size={14} className="text-slate-400" />
-
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                    Class
-                  </span>
-
-                  <select
-                    value={classFilter}
-                    onChange={(e) => setClassFilter(e.target.value)}
-                    className="bg-transparent text-xs font-bold text-slate-800 outline-none"
-                  >
-                    {classOptions.map((cls) => (
-                      <option key={cls} value={cls}>
-                        {cls}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* View Toggle */}
-                <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-                  <button
-                    onClick={() => setViewMode("table")}
-                    className={`rounded-lg p-1.5 transition ${
-                      viewMode === "table"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-slate-400 hover:text-slate-700"
-                    }`}
-                    title="Table View"
-                  >
-                    <List size={16} />
-                  </button>
-
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`rounded-lg p-1.5 transition ${
-                      viewMode === "grid"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-slate-400 hover:text-slate-700"
-                    }`}
-                    title="Grid View"
-                  >
-                    <LayoutGrid size={16} />
-                  </button>
-                </div>
-              </div>
+              {/* Class Filter */}
+              <select
+                value={selectedClass}
+                onChange={(e) => handleClassChange(e.target.value)}
+                className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              >
+                {classes.map((className) => (
+                  <option key={className} value={className}>
+                    {className === "All" ? "All Classes" : className}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* =======================================================
-              EMPTY STATE
-          ======================================================= */}
-          {filteredStudents.length === 0 ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                <Search size={22} />
-              </div>
-
-              <h3 className="mt-4 text-sm font-bold text-slate-800">
-                No matching students found
-              </h3>
-
-              <p className="mt-1 max-w-sm text-xs text-slate-500">
-                Try adjusting your search criteria or class filters.
-              </p>
-
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setClassFilter("All");
-                }}
-                className="mt-4 rounded-lg px-3 py-2 text-xs font-bold text-blue-600 transition hover:bg-blue-50"
-              >
-                Reset Filters
-              </button>
-            </div>
-          ) : viewMode === "table" ? (
-
-            /* =====================================================
-               TABLE VIEW
-            ===================================================== */
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-
-              {/* Table Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 p-5">
-                <div className="flex items-center gap-2">
-                  <Users size={18} className="text-blue-600" />
-
-                  <h2 className="text-sm font-extrabold text-slate-900">
-                    All Students
-                  </h2>
-                </div>
-
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
-                  {filteredStudents.length} Shown
-                </span>
-              </div>
-
+          {/* Student Table */}
+          {paginatedStudents.length > 0 ? (
+            <>
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full min-w-[850px] text-left">
 
+                  {/* Table Header */}
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                      <th className="px-6 py-3.5">
+                    <tr className="border-b border-gray-200 bg-gray-50/70">
+
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
                         Student
                       </th>
 
-                      <th className="px-6 py-3.5">
-                        Class
-                      </th>
-
-                      <th className="px-6 py-3.5">
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
                         Roll No.
                       </th>
 
-                      <th className="px-6 py-3.5">
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Class
+                      </th>
+
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
                         Attendance
                       </th>
 
-                      <th className="px-6 py-3.5 text-right">
-                        Actions
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Status
                       </th>
+
+                      <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Action
+                      </th>
+
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredStudents.map((student) => {
-                      const isHighAttendance =
-                        student.attendance >= 90;
+                  {/* Table Body */}
+                  <tbody className="divide-y divide-gray-100">
+                    {paginatedStudents.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="transition hover:bg-gray-50/70"
+                      >
 
-                      const isMediumAttendance =
-                        student.attendance >= 80 &&
-                        student.attendance < 90;
+                        {/* Student */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
 
-                      return (
-                        <tr
-                          key={student.id}
-                          className="group transition-colors hover:bg-slate-50/70"
-                        >
-                          {/* Student */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-[10px] font-extrabold text-white shadow-sm">
-                                {student.avatar}
-                              </div>
+                            {/* Student initials */}
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">
+                              {getInitials(student.name)}
+                            </div>
 
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-900 transition group-hover:text-blue-600">
-                                  {student.name}
-                                </p>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-gray-900">
+                                {student.name}
+                              </p>
 
-                                <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400">
-                                  <span>{student.id}</span>
-
-                                  <span>•</span>
-
-                                  <span className="flex items-center gap-1">
-                                    <Mail size={10} />
-                                    {student.email}
-                                  </span>
-                                </div>
+                              <div className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                                <Mail className="h-3.5 w-3.5" />
+                                {student.email}
                               </div>
                             </div>
-                          </td>
 
-                          {/* Class */}
-                          <td className="px-6 py-4">
-                            <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-700">
-                              {student.className}
+                          </div>
+                        </td>
+
+                        {/* Roll Number */}
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-700">
+                          {student.rollNo}
+                        </td>
+
+                        {/* Class */}
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-600">
+                            {student.className}
+                          </span>
+                        </td>
+
+                        {/* Attendance */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+
+                            <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100">
+                              <div
+                                className="h-full rounded-full bg-indigo-500"
+                                style={{
+                                  width: `${student.attendance}%`,
+                                }}
+                              />
+                            </div>
+
+                            <span className="text-sm font-bold text-gray-700">
+                              {student.attendance}%
                             </span>
-                          </td>
 
-                          {/* Roll */}
-                          <td className="px-6 py-4 text-xs font-semibold text-slate-600">
-                            #{student.roll}
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Attendance */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-extrabold ${
-                                  isHighAttendance
-                                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
-                                    : isMediumAttendance
-                                    ? "border-amber-500/20 bg-amber-500/10 text-amber-600"
-                                    : "border-rose-500/20 bg-rose-500/10 text-rose-600"
-                                }`}
-                              >
-                                {student.attendance}%
-                              </span>
+                        {/* Status */}
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+                              student.status === "Active"
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {student.status}
+                          </span>
+                        </td>
 
-                              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    isHighAttendance
-                                      ? "bg-emerald-500"
-                                      : isMediumAttendance
-                                      ? "bg-amber-500"
-                                      : "bg-rose-500"
-                                  }`}
-                                  style={{
-                                    width: `${student.attendance}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
+                        {/* Action */}
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            href={`/teacher/students/${student.id}`}
+                            className="group inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:border-indigo-100 hover:bg-indigo-50"
+                          >
+                            <span>View Profile</span>
 
-                          {/* Actions */}
-                          <td className="px-6 py-4 text-right">
-                            <button className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white">
-                              <Eye size={13} />
-                              View Profile
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                          </Link>
+                        </td>
+
+                      </tr>
+                    ))}
                   </tbody>
+
                 </table>
               </div>
-            </div>
 
+              {/* Pagination */}
+              <div className="flex flex-col justify-between gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:items-center">
+
+                <p className="text-xs font-medium text-gray-500">
+                  Showing{" "}
+                  <span className="font-bold text-gray-700">
+                    {filteredStudents.length === 0
+                      ? 0
+                      : (safeCurrentPage - 1) * studentsPerPage + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-bold text-gray-700">
+                    {Math.min(
+                      safeCurrentPage * studentsPerPage,
+                      filteredStudents.length,
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-bold text-gray-700">
+                    {filteredStudents.length}
+                  </span>{" "}
+                  students
+                </p>
+
+                <div className="flex items-center gap-2">
+
+                  {/* Previous button */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Previous
+                  </button>
+
+                  {/* Current page */}
+                  <div className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-indigo-600 px-3 text-xs font-bold text-white">
+                    {safeCurrentPage}
+                  </div>
+
+                  {/* Next button */}
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1),
+                      )
+                    }
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+
+                </div>
+              </div>
+            </>
           ) : (
 
-            /* =====================================================
-               GRID VIEW
-            ===================================================== */
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {filteredStudents.map((student) => {
-                const isHighAttendance =
-                  student.attendance >= 90;
+            /* No students found */
+            <div className="px-6 py-16 text-center">
 
-                const isMediumAttendance =
-                  student.attendance >= 80 &&
-                  student.attendance < 90;
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                <Users className="h-6 w-6" />
+              </div>
 
-                return (
-                  <div
-                    key={student.id}
-                    className="group flex min-h-[300px] flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-extrabold text-white shadow-md">
-                          {student.avatar}
-                        </div>
+              <h3 className="mt-4 text-sm font-bold text-gray-900">
+                No students found
+              </h3>
 
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-900 transition group-hover:text-blue-600">
-                            {student.name}
-                          </h3>
+              <p className="mx-auto mt-1 max-w-sm text-sm font-medium text-gray-500">
+                Try changing your search or class filter.
+              </p>
 
-                          <p className="text-[10px] font-medium text-slate-400">
-                            {student.id}
-                          </p>
-                        </div>
-                      </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setSelectedClass("All");
+                  setCurrentPage(1);
+                }}
+                className="mt-5 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              >
+                Clear Filters
+              </button>
 
-                      <button className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
-                        <MoreVertical size={16} />
-                      </button>
-                    </div>
-
-                    <div className="my-5 h-px bg-slate-100" />
-
-                    <div className="space-y-3 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">
-                          Class
-                        </span>
-
-                        <span className="font-bold text-slate-700">
-                          {student.className}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">
-                          Roll Number
-                        </span>
-
-                        <span className="font-bold text-slate-700">
-                          #{student.roll}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-slate-400">
-                          Email
-                        </span>
-
-                        <span className="truncate font-medium text-slate-600">
-                          {student.email}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Attendance */}
-                    <div className="mt-auto pt-6">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          Attendance
-                        </span>
-
-                        <span
-                          className={`text-xs font-extrabold ${
-                            isHighAttendance
-                              ? "text-emerald-600"
-                              : isMediumAttendance
-                              ? "text-amber-600"
-                              : "text-rose-600"
-                          }`}
-                        >
-                          {student.attendance}%
-                        </span>
-                      </div>
-
-                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className={`h-full rounded-full ${
-                            isHighAttendance
-                              ? "bg-emerald-500"
-                              : isMediumAttendance
-                              ? "bg-amber-500"
-                              : "bg-rose-500"
-                          }`}
-                          style={{
-                            width: `${student.attendance}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <button className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white">
-                      <Eye size={14} />
-                      View Full Details
-                    </button>
-                  </div>
-                );
-              })}
             </div>
           )}
         </section>
 
-        {/* =========================================================
-            PAGINATION
-        ========================================================= */}
-        <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-
-          <div className="text-xs font-medium text-slate-500">
-            Showing{" "}
-            <span className="font-bold text-slate-900">
-              1
-            </span>{" "}
-            to{" "}
-            <span className="font-bold text-slate-900">
-              {filteredStudents.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-bold text-slate-900">
-              {totalStudentsCount}
-            </span>{" "}
-            students
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              disabled={currentPage === 1}
-              onClick={() =>
-                setCurrentPage((p) => Math.max(1, p - 1))
-              }
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            <button className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white shadow-sm">
-              1
-            </button>
-
-            <button className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-slate-600 transition hover:bg-slate-100">
-              2
-            </button>
-
-            <button className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-slate-600 transition hover:bg-slate-100">
-              3
-            </button>
-
-            <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50"
-            >
-              <ChevronRight size={15} />
-            </button>
-          </div>
+        {/* Footer text inside the page */}
+        <div className="pb-2 text-center">
+          <p className="text-xs font-medium text-gray-400">
+            Student Management · Teacher Dashboard
+          </p>
         </div>
+
       </div>
     </div>
   );
+}
+
+/* --------------------------------
+   Reusable Stat Card
+--------------------------------- */
+
+function StatCard({
+  icon,
+  label,
+  value,
+  description,
+  hoverColor,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  description: string;
+  hoverColor: "blue" | "emerald" | "purple" | "amber";
+}) {
+  // Different hover border colors for each statistics card
+  const hoverClasses = {
+    blue: "hover:border-blue-300",
+    emerald: "hover:border-emerald-300",
+    purple: "hover:border-purple-300",
+    amber: "hover:border-amber-300",
+  };
+
+  return (
+    <div
+      className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md ${hoverClasses[hoverColor]}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          {icon}
+        </div>
+      </div>
+
+      <p className="mt-4 text-sm font-semibold text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
+        {value}
+      </p>
+
+      <p className="mt-1 text-xs font-medium text-gray-400">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+/* --------------------------------
+   Get Student Initials
+--------------------------------- */
+
+function getInitials(name: string) {
+  // Split the student's full name into words
+  // and take the first letter of each word.
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }

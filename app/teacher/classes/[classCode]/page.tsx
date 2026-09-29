@@ -424,14 +424,6 @@ export default async function ManageClassPage({ params }: PageProps) {
                 Students enrolled in {currentClass.name}.
               </p>
             </div>
-
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
-            >
-              <Plus className="h-4 w-4" />
-              Add Student
-            </button>
           </div>
 
           {currentClass.students.length > 0 ? (
