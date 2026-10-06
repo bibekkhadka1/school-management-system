@@ -1,515 +1,147 @@
 "use client";
 
-import {
-  BarChart3,
-  TrendingUp,
-  ArrowRight,
-  CalendarDays,
-  ChevronDown,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, BarChart3, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const attendanceData = [
-  { day: "Mon", percentage: 91 },
-  { day: "Tue", percentage: 87 },
-  { day: "Wed", percentage: 94 },
-  { day: "Thu", percentage: 82 },
-  { day: "Fri", percentage: 89 },
-  { day: "Sat", percentage: 96 },
-];
+const data = {
+  Week: [
+    { label: "Mon", value: 94 },
+    { label: "Tue", value: 96 },
+    { label: "Wed", value: 91 },
+    { label: "Thu", value: 95 },
+    { label: "Fri", value: 93 },
+  ],
+  Month: [
+    { label: "Week 1", value: 91 },
+    { label: "Week 2", value: 94 },
+    { label: "Week 3", value: 96 },
+    { label: "Week 4", value: 93 },
+  ],
+  Semester: [
+    { label: "Jun", value: 91 },
+    { label: "Jul", value: 93 },
+    { label: "Aug", value: 95 },
+    { label: "Sep", value: 94 },
+  ],
+};
+
+type Period = keyof typeof data;
 
 export default function AttendanceOverview() {
-  const average = Math.round(
-    attendanceData.reduce((sum, item) => sum + item.percentage, 0) /
-      attendanceData.length
-  );
+  const router = useRouter();
+  const [period, setPeriod] = useState<Period>("Week");
+
+  const chartData = data[period];
+
+  const average = useMemo(() => {
+    return Math.round(
+      chartData.reduce((sum, item) => sum + item.value, 0) / chartData.length,
+    );
+  }, [chartData]);
 
   return (
-    <div
-      className="
-        group
-        relative
-        h-full
-        min-h-[520px]
-        overflow-hidden
-        rounded-2xl
-        border
-        border-slate-200/80
-        bg-white
-        p-5
-        shadow-sm
-        transition-all
-        duration-300
-        hover:border-slate-300
-        hover:shadow-lg
-      "
-    >
-      {/* Decorative Background */}
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -right-20
-          -top-20
-          h-48
-          w-48
-          rounded-full
-          bg-blue-500/[0.04]
-          blur-3xl
-        "
-      />
+    <section className="h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900">
+              Attendance Overview
+            </h2>
 
-      <div className="relative flex h-full flex-col">
-
-        {/* ================= HEADER ================= */}
-
-        <div className="mb-5 flex items-start justify-between gap-4">
-
-          <div className="flex items-center gap-3">
-
-            {/* Icon */}
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                shrink-0
-                items-center
-                justify-center
-                rounded-xl
-                bg-blue-50
-                text-blue-600
-              "
-            >
-              <BarChart3 size={18} strokeWidth={2} />
-            </div>
-
-            {/* Title */}
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Attendance Overview
-              </h2>
-
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                Weekly attendance performance
-              </p>
-            </div>
-
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+              {average}%
+            </span>
           </div>
 
-          {/* Period Selector */}
+          <p className="mt-1 text-[11px] font-medium text-slate-400">
+            Attendance performance over time
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as Period)}
+              className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-[10px] font-bold text-slate-600 outline-none transition hover:border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="Week">This Week</option>
+              <option value="Month">This Month</option>
+              <option value="Semester">Semester</option>
+            </select>
+
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          </div>
+
           <button
             type="button"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-2
-              rounded-lg
-              border
-              border-slate-200
-              bg-white
-              px-3
-              py-1.5
-              text-[10px]
-              font-semibold
-              text-slate-600
-              shadow-sm
-              transition-all
-              duration-200
-              hover:border-blue-200
-              hover:bg-blue-50
-              hover:text-blue-600
-            "
+            onClick={() => router.push("/teacher/attendance")}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[10px] font-bold text-indigo-600 transition hover:bg-indigo-50"
           >
-            This Week
-            <ChevronDown size={12} />
+            Report
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
+        </div>
+      </div>
 
+      <div className="p-5">
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Average attendance
+            </p>
+
+            <p className="mt-1 text-3xl font-black tracking-tight text-slate-900">
+              {average}%
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Healthy range
+          </div>
         </div>
 
-        {/* ================= SUMMARY ================= */}
+        <div className="flex h-44 items-end gap-3 border-b border-slate-100 px-1">
+          {chartData.map((item) => {
+            const height = Math.max(20, ((item.value - 80) / 20) * 100);
 
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-
-          {/* Average */}
-          <div
-            className="
-              rounded-xl
-              border
-              border-blue-100
-              bg-blue-50/40
-              p-3
-              transition-all
-              duration-200
-              hover:border-blue-200
-              hover:bg-blue-50/60
-            "
-          >
-            <p
-              className="
-                text-[9px]
-                font-bold
-                uppercase
-                tracking-[0.6px]
-                text-slate-400
-              "
-            >
-              Average
-            </p>
-
-            <div className="mt-1 flex items-baseline gap-1">
-
-              <span
-                className="
-                  text-2xl
-                  font-extrabold
-                  tracking-tight
-                  text-slate-900
-                "
+            return (
+              <div
+                key={item.label}
+                className="group flex h-full flex-1 flex-col justify-end"
               >
-                {average}%
-              </span>
-
-              <span className="text-[9px] font-semibold text-emerald-600">
-                +2.4%
-              </span>
-
-            </div>
-          </div>
-
-          {/* Best */}
-          <div
-            className="
-              rounded-xl
-              border
-              border-emerald-100
-              bg-emerald-50/40
-              p-3
-              transition-all
-              duration-200
-              hover:border-emerald-200
-              hover:bg-emerald-50/60
-            "
-          >
-            <p
-              className="
-                text-[9px]
-                font-bold
-                uppercase
-                tracking-[0.6px]
-                text-slate-400
-              "
-            >
-              Best Day
-            </p>
-
-            <div className="mt-1 flex items-baseline gap-2">
-
-              <span
-                className="
-                  text-2xl
-                  font-extrabold
-                  tracking-tight
-                  text-slate-900
-                "
-              >
-                96%
-              </span>
-
-              <span className="text-[9px] font-semibold text-slate-400">
-                Sat
-              </span>
-
-            </div>
-          </div>
-
-          {/* Trend */}
-          <div
-            className="
-              col-span-2
-              rounded-xl
-              border
-              border-violet-100
-              bg-violet-50/40
-              p-3
-              transition-all
-              duration-200
-              hover:border-violet-200
-              hover:bg-violet-50/60
-              sm:col-span-1
-            "
-          >
-            <p
-              className="
-                text-[9px]
-                font-bold
-                uppercase
-                tracking-[0.6px]
-                text-slate-400
-              "
-            >
-              Monthly Trend
-            </p>
-
-            <div className="mt-1 flex items-center gap-2">
-
-              <TrendingUp
-                size={17}
-                className="text-violet-600"
-              />
-
-              <span
-                className="
-                  text-xl
-                  font-extrabold
-                  tracking-tight
-                  text-slate-900
-                "
-              >
-                +4.8%
-              </span>
-
-            </div>
-          </div>
-
-        </div>
-
-        {/* ================= CHART ================= */}
-
-        <div
-          className="
-            flex
-            flex-1
-            flex-col
-            rounded-xl
-            border
-            border-slate-100
-            bg-slate-50/40
-            p-4
-          "
-        >
-
-          {/* Chart Header */}
-
-          <div className="mb-4 flex items-center justify-between">
-
-            <div>
-              <p className="text-xs font-bold text-slate-700">
-                Daily Attendance
-              </p>
-
-              <p className="mt-0.5 text-[9px] text-slate-400">
-                Percentage of students present
-              </p>
-            </div>
-
-            <span
-              className="
-                rounded-full
-                bg-emerald-50
-                px-2
-                py-1
-                text-[8px]
-                font-bold
-                text-emerald-600
-              "
-            >
-              Healthy
-            </span>
-
-          </div>
-
-          {/* Graph */}
-
-          <div className="relative flex flex-1 items-end">
-
-            {/* Horizontal Grid Lines */}
-
-            <div
-              className="
-                pointer-events-none
-                absolute
-                inset-x-0
-                top-0
-                bottom-7
-                flex
-                flex-col
-                justify-between
-              "
-            >
-              {[100, 90, 80, 70].map((value) => (
-                <div
-                  key={value}
-                  className="flex items-center gap-2"
-                >
-                  <span
-                    className="
-                      w-7
-                      text-right
-                      text-[8px]
-                      font-medium
-                      text-slate-300
-                    "
-                  >
-                    {value}
-                  </span>
-
-                  <div className="h-px flex-1 bg-slate-100" />
-                </div>
-              ))}
-            </div>
-
-            {/* Bars */}
-
-            <div
-              className="
-                relative
-                z-10
-                ml-9
-                flex
-                h-full
-                flex-1
-                items-end
-                justify-between
-                gap-3
-                pb-7
-              "
-            >
-
-              {attendanceData.map((item) => (
-
-                <div
-                  key={item.day}
-                  className="
-                    group/bar
-                    flex
-                    h-full
-                    flex-1
-                    flex-col
-                    items-center
-                    justify-end
-                  "
-                >
-
-                  {/* Percentage */}
-
-                  <span
-                    className="
-                      mb-2
-                      text-[9px]
-                      font-bold
-                      text-slate-500
-                      opacity-0
-                      transition-all
-                      duration-200
-                      group-hover/bar:opacity-100
-                    "
-                  >
-                    {item.percentage}%
-                  </span>
-
-                  {/* Bar */}
-
-                  <div
-                    className="
-                      relative
-                      w-full
-                      max-w-[38px]
-                      overflow-hidden
-                      rounded-t-lg
-                      bg-blue-500/10
-                    "
-                    style={{
-                      height: `${item.percentage}%`,
-                    }}
-                  >
-                    <div
-                      className="
-                        absolute
-                        inset-0
-                        rounded-t-lg
-                        bg-blue-500
-                        opacity-80
-                        transition-all
-                        duration-300
-                        hover:bg-blue-600
-                      "
-                    />
+                <div className="relative flex flex-1 items-end justify-center">
+                  <div className="absolute bottom-full mb-2 rounded-md bg-slate-900 px-2 py-1 text-[9px] font-bold text-white opacity-0 transition group-hover:opacity-100">
+                    {item.value}%
                   </div>
 
-                  {/* Day */}
-
-                  <span
-                    className="
-                      absolute
-                      bottom-0
-                      text-[9px]
-                      font-semibold
-                      text-slate-400
-                    "
-                  >
-                    {item.day}
-                  </span>
-
+                  <div
+                    className="w-full max-w-10 rounded-t-lg bg-indigo-500 transition-all duration-500 group-hover:bg-indigo-600"
+                    style={{ height: `${height}%` }}
+                  />
                 </div>
 
-              ))}
-
-            </div>
-
-          </div>
-
+                <span className="mt-2 text-center text-[9px] font-bold text-slate-400">
+                  {item.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        {/* ================= FOOTER ================= */}
-
-        <div
-          className="
-            mt-4
-            flex
-            items-center
-            justify-between
-            border-t
-            border-slate-100
-            pt-3
-          "
-        >
-
-          <div className="flex items-center gap-2">
-
-            <CalendarDays
-              size={12}
-              className="text-slate-400"
-            />
-
-            <span className="text-[10px] font-medium text-slate-400">
-              Last updated today
-            </span>
-
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Attendance trend
           </div>
 
-          <button
-            type="button"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-1
-              text-[10px]
-              font-semibold
-              text-slate-500
-              transition-colors
-              duration-200
-              hover:text-blue-600
-            "
-          >
-            View Full Report
-            <ArrowRight size={12} />
-          </button>
-
+          <span className="text-[10px] font-bold text-slate-500">
+            Target: 90%+
+          </span>
         </div>
-
       </div>
-    </div>
+    </section>
   );
 }

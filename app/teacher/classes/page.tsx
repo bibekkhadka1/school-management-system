@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 type ClassItem = {
+  id: number;
   code: string;
   name: string;
   students: number;
@@ -26,106 +27,163 @@ type ClassItem = {
   schedule: string;
   time: string;
   attendance: number;
-  subjects: number;
+
+  subjects: {
+    id: number;
+    name: string;
+    code: string;
+  }[];
   status: "Active" | "Upcoming";
 };
 
-const classes: ClassItem[] = [
-  {
-    code: "BCA-3A",
-    name: "Bachelor of Computer Applications",
-    students: 42,
-    room: "Room 204",
-    schedule: "Sun, Tue, Thu",
-    time: "10:00 AM",
-    attendance: 94,
-    subjects: 6,
-    status: "Active",
-  },
-  {
-    code: "BCA-3B",
-    name: "Bachelor of Computer Applications",
-    students: 38,
-    room: "Room 205",
-    schedule: "Sun, Tue, Thu",
-    time: "11:30 AM",
-    attendance: 91,
-    subjects: 6,
-    status: "Active",
-  },
-  {
-    code: "BCA-4A",
-    name: "Bachelor of Computer Applications",
-    students: 45,
-    room: "Room 301",
-    schedule: "Mon, Wed, Fri",
-    time: "9:00 AM",
-    attendance: 96,
-    subjects: 7,
-    status: "Active",
-  },
-  {
-    code: "CSIT-5A",
-    name: "Bachelor of Computer Science & IT",
-    students: 40,
-    room: "Lab 02",
-    schedule: "Mon, Wed, Fri",
-    time: "1:00 PM",
-    attendance: 92,
-    subjects: 7,
-    status: "Active",
-  },
-  {
-    code: "BIT-2A",
-    name: "Bachelor of Information Technology",
-    students: 36,
-    room: "Room 102",
-    schedule: "Sun, Tue, Thu",
-    time: "2:00 PM",
-    attendance: 89,
-    subjects: 5,
-    status: "Upcoming",
-  },
-  {
-    code: "BCA-6A",
-    name: "Bachelor of Computer Applications",
-    students: 43,
-    room: "Room 401",
-    schedule: "Mon, Wed, Fri",
-    time: "3:30 PM",
-    attendance: 98,
-    subjects: 6,
-    status: "Active",
-  },
-];
+type ClassFromAPI = {
+  id: number;
+  name: string;
+  code: string;
+  room: string;
+  capacity: number;
+  schedule: string;
+  class_time: string;
+  status: "Active" | "Upcoming";
+  created_at: string;
 
-const subjectOptions = [
-  "All Subjects",
-  "DBMS",
-  "Web Development",
-  "Data Structures",
-  "Operating Systems",
-  "Data Science",
-];
+  student_count: number;
+
+  // Subjects assigned to this class
+  subjects: {
+    id: number;
+    name: string;
+    code: string;
+  }[];
+
+  // Attendance percentage calculated by the backend
+  attendance: number | string;
+};
+
+// This describes the complete response returned by
+// the /api/classes backend endpoint.
+type ClassesAPIResponse = {
+  // All class records returned from the database
+  classes: ClassFromAPI[];
+
+  // Overall attendance calculated from ALL attendance records
+  overallAttendance: number;
+};
 
 type StatCardProps = {
   title: string;
   value: string | number;
   description: string;
   icon: React.ReactNode;
-  hoverColor:
-    | "blue"
-    | "emerald"
-    | "purple"
-    | "amber";
+  hoverColor: "blue" | "emerald" | "purple" | "amber";
 };
+
+// export default function ClassesPage() {
+//   const router = useRouter();
+
+//   const [search, setSearch] = useState("");
+//   const [subject, setSubject] = useState("All Subjects");
+//   const [view, setView] = useState<"grid" | "list">("grid");
 
 export default function ClassesPage() {
   const router = useRouter();
 
+  // Stores classes received from the backend
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  // Stores the overall attendance percentage
+  // calculated by the backend from all attendance records.
+  const [overallAttendance, setOverallAttendance] = useState(0);
+
+  // Keeps track of whether the database data is still loading
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [subject, setSubject] = useState("All Subjects");
   const [view, setView] = useState<"grid" | "list">("grid");
+
+  // Create the subject filter options from the subjects
+  // returned by the database through the classes API.
+  const subjectOptions = useMemo(() => {
+    const subjectMap = new Map<string, string>();
+
+    classes.forEach((classItem) => {
+      classItem.subjects.forEach((itemSubject) => {
+        // Use the subject code as the unique key.
+        // The subject name is what we show in the dropdown.
+        subjectMap.set(itemSubject.code, itemSubject.name);
+      });
+    });
+
+    return ["All Subjects", ...Array.from(subjectMap.values()).sort()];
+  }, [classes]);
+
+  // Fetch classes from the Express backend when the page loads
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        // Send a request to our backend API
+        const response = await fetch("http://localhost:5000/api/classes");
+
+        // Check whether the backend returned a successful response
+        if (!response.ok) {
+          throw new Error("Failed to fetch classes");
+        }
+
+        // The backend now returns both the classes
+        // and the overall attendance percentage.
+        const data: ClassesAPIResponse = await response.json();
+
+        console.log(
+          "CLASS ATTENDANCE DATA:",
+          data.classes.map((item) => ({
+            class: item.code,
+            attendance: item.attendance,
+            type: typeof item.attendance,
+          })),
+        );
+
+        // Convert database data into the format
+        // already expected by our existing Classes UI
+        const formattedClasses: ClassItem[] = data.classes.map((item) => ({
+          id: item.id,
+          code: item.code,
+          name: item.name,
+
+          // Students will be connected later
+          students: item.student_count,
+
+          room: item.room,
+          schedule: item.schedule,
+
+          // Database uses "class_time"
+          // but our UI uses "time"
+          time: item.class_time,
+
+          // Convert PostgreSQL numeric value into a JavaScript number
+          attendance: Number(item.attendance),
+
+          subjects: item.subjects,
+
+          status: item.status,
+        }));
+
+        // Put the converted classes into React state
+        setClasses(formattedClasses);
+
+        // Store the overall attendance calculated by the backend.
+        setOverallAttendance(Number(data.overallAttendance));
+      } catch (error) {
+        // Show any API/database error in the browser console
+        console.error("Failed to fetch classes:", error);
+      } finally {
+        // Loading is finished whether the request succeeded or failed
+        setLoading(false);
+      }
+    };
+
+    // Run the function
+    fetchClasses();
+  }, []);
 
   const filteredClasses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -139,12 +197,18 @@ export default function ClassesPage() {
 
       // Subject filtering is left as a UI filter for now because
       // the current class data does not contain subject assignments.
+      // Check whether the selected subject is actually assigned to this class
       const matchesSubject =
-        subject === "All Subjects" || item.subjects > 0;
+        subject === "All Subjects" ||
+        item.subjects.some(
+          (itemSubject) =>
+            itemSubject.code.toLowerCase() === subject.toLowerCase() ||
+            itemSubject.name.toLowerCase() === subject.toLowerCase(),
+        );
 
       return matchesSearch && matchesSubject;
     });
-  }, [search, subject]);
+  }, [classes, search, subject]);
 
   const totalStudents = classes.reduce(
     (total, item) => total + item.students,
@@ -152,8 +216,10 @@ export default function ClassesPage() {
   );
 
   const averageAttendance =
-    classes.reduce((total, item) => total + item.attendance, 0) /
-    classes.length;
+    classes.length > 0
+      ? classes.reduce((total, item) => total + item.attendance, 0) /
+        classes.length
+      : 0;
 
   const activeClasses = classes.filter(
     (item) => item.status === "Active",
@@ -167,6 +233,20 @@ export default function ClassesPage() {
     setSearch("");
     setSubject("All Subjects");
   };
+  // Show a loading message while classes are being fetched
+  if (loading) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-gray-50/60 p-6">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />
+
+          <p className="mt-3 text-sm font-semibold text-slate-600">
+            Loading classes...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
@@ -184,8 +264,7 @@ export default function ClassesPage() {
             </h1>
 
             <p className="mt-1 text-sm font-medium text-slate-500">
-              Manage your classes, students, schedules and academic
-              information.
+              Manage your classes, students, schedules and academic information.
             </p>
           </div>
         </div>
@@ -210,7 +289,7 @@ export default function ClassesPage() {
 
           <StatCard
             title="Average Attendance"
-            value={`${averageAttendance.toFixed(1)}%`}
+           value={`${overallAttendance.toFixed(1)}%`}
             description="Across all classes"
             icon={<TrendingUp className="h-5 w-5" />}
             hoverColor="purple"
@@ -318,9 +397,7 @@ export default function ClassesPage() {
         {/* Section Header */}
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Your Classes
-            </h2>
+            <h2 className="text-lg font-bold text-slate-900">Your Classes</h2>
             <p className="mt-0.5 text-sm font-medium text-slate-500">
               Select a class to manage students and academic details.
             </p>
@@ -400,7 +477,7 @@ export default function ClassesPage() {
                   <DetailRow
                     icon={<BookOpen className="h-4 w-4" />}
                     label="Subjects"
-                    value={`${item.subjects} subjects`}
+                    value={`${item.subjects.length} subjects`}
                   />
                 </div>
 
@@ -434,11 +511,11 @@ export default function ClassesPage() {
                     type="button"
                     onClick={() =>
                       router.push(
-                        `/teacher/classes/${encodeURIComponent(item.code)}`,
+                        `/teacher/classes/${encodeURIComponent(item.id)}`,
                       )
                     }
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
-                    aria-label={`Manage ${item.code}`}
+                    aria-label={`Manage ${item.id}`}
                   >
                     <ArrowRight className="h-4 w-4" />
                   </button>
@@ -522,11 +599,11 @@ export default function ClassesPage() {
                   type="button"
                   onClick={() =>
                     router.push(
-                      `/teacher/classes/${encodeURIComponent(item.code)}`,
+                      `/teacher/classes/${encodeURIComponent(item.id)}`,
                     )
                   }
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
-                  aria-label={`Manage ${item.code}`}
+                  aria-label={`Manage ${item.id}`}
                 >
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -611,17 +688,13 @@ function StatCard({
         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
       </div>
 
-      <p className="text-sm font-semibold text-slate-500">
-        {title}
-      </p>
+      <p className="text-sm font-semibold text-slate-500">{title}</p>
 
       <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
         {value}
       </p>
 
-      <p className="mt-1 text-xs font-medium text-slate-400">
-        {description}
-      </p>
+      <p className="mt-1 text-xs font-medium text-slate-400">{description}</p>
     </div>
   );
 }
@@ -644,9 +717,7 @@ function DetailRow({
       <div className="flex min-w-0 items-center gap-2 text-slate-400">
         {icon}
 
-        <span className="text-xs font-semibold">
-          {label}
-        </span>
+        <span className="text-xs font-semibold">{label}</span>
       </div>
 
       <span className="truncate text-right text-xs font-bold text-slate-700">
@@ -660,11 +731,7 @@ function DetailRow({
    EMPTY STATE
    ========================================================= */
 
-function EmptyState({
-  onClear,
-}: {
-  onClear: () => void;
-}) {
+function EmptyState({ onClear }: { onClear: () => void }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">

@@ -1,333 +1,162 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
-  CalendarDays,
-  ClipboardCheck,
-  FilePlus,
-  Upload,
-  MessageSquare,
   ArrowRight,
+  BookOpen,
+  CalendarDays,
+  ClipboardList,
+  MessageSquare,
+  Plus,
+  Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 export default function DashboardHeader() {
-  const today = new Date();
+  const router = useRouter();
+  const [greeting, setGreeting] = useState("Welcome");
+  const [date, setDate] = useState("");
 
-  const formattedDate = today.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  useEffect(() => {
+    const now = new Date();
 
-  const actions = [
-    {
-      label: "Mark Attendance",
-      icon: ClipboardCheck,
-      color: "blue",
-    },
-    {
-      label: "Create Assignment",
-      icon: FilePlus,
-      color: "indigo",
-    },
-    {
-      label: "Upload Material",
-      icon: Upload,
-      color: "emerald",
-    },
-    {
-      label: "Messages",
-      icon: MessageSquare,
-      color: "violet",
-    },
-  ];
+    setGreeting(getGreeting());
+
+    setDate(
+      now.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    );
+  }, []);
 
   return (
-    <div className="mb-6">
-
-      {/* =========================
-          HERO / GREETING
-      ========================== */}
-      <div
-        className="
-          relative
-          overflow-hidden
-          rounded-2xl
-          border border-slate-200/80
-          bg-white
-          px-5 py-6
-          shadow-sm
-          sm:px-6
-          lg:px-7
-        "
-      >
-
-        {/* Decorative gradient */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            -right-24
-            -top-24
-            h-64
-            w-64
-            rounded-full
-            bg-blue-500/10
-            blur-3xl
-          "
-        />
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            -bottom-32
-            right-32
-            h-48
-            w-48
-            rounded-full
-            bg-indigo-500/5
-            blur-3xl
-          "
-        />
+    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7">
+        {/* Decorative background */}
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-indigo-50/70 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 right-28 h-48 w-48 rounded-full bg-blue-50/60 blur-3xl" />
 
         <div className="relative">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {date || "Today"}
+                </span>
 
-          {/* Top section */}
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <span className="hidden text-xs font-medium text-slate-300 sm:inline">
+                  •
+                </span>
 
-            {/* Greeting */}
-            <div>
-
-              <div className="mb-2 flex items-center gap-2">
-
-                <span
-                  className="
-                    inline-flex
-                    h-7
-                    items-center
-                    rounded-full
-                    bg-blue-50
-                    px-3
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.8px]
-                    text-blue-700
-                  "
-                >
+                <span className="text-xs font-semibold text-slate-400">
                   Teacher Dashboard
                 </span>
-
-                <span className="h-1 w-1 rounded-full bg-slate-300" />
-
-                <span className="text-[11px] font-medium text-slate-400">
-                  Today
-                </span>
-
               </div>
 
-              <h1
-                className="
-                  text-2xl
-                  font-extrabold
-                  tracking-tight
-                  text-slate-900
-                  sm:text-3xl
-                "
-              >
-                Good Morning, Teacher
-                <span className="ml-2">👋</span>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                {greeting}, Teacher
               </h1>
 
-              <p
-                className="
-                  mt-2
-                  max-w-xl
-                  text-sm
-                  leading-6
-                  text-slate-500
-                "
-              >
-                Here&apos;s what&apos;s happening with your classes today.
-                Stay organized and keep your students on track.
+              <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+                Here&apos;s your teaching overview for today. Manage classes,
+                attendance, assignments and student activities from one place.
               </p>
-
             </div>
 
-            {/* Date Card */}
-            <div
-              className="
-                flex
-                w-fit
-                items-center
-                gap-3
-                rounded-xl
-                border
-                border-slate-200
-                bg-slate-50
-                px-4
-                py-3
-                transition-all
-                duration-300
-                hover:border-blue-200
-                hover:bg-blue-50/50
-              "
-            >
-
-              <div
-                className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-white
-                  text-blue-600
-                  shadow-sm
-                "
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/teacher/attendance")}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 active:scale-[0.98]"
               >
-                <CalendarDays size={18} strokeWidth={2} />
-              </div>
+                <Users className="h-4 w-4" />
+                Attendance
+              </button>
 
-              <div>
-                <p
-                  className="
-                    text-[9px]
-                    font-bold
-                    uppercase
-                    tracking-[0.7px]
-                    text-slate-400
-                  "
-                >
-                  Today&apos;s Date
-                </p>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-700">
-                  {formattedDate}
-                </p>
-              </div>
-
+              <button
+                type="button"
+                onClick={() => router.push("/teacher/assignments/new")}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-3.5 text-xs font-bold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+                New Assignment
+              </button>
             </div>
-
           </div>
 
-          {/* Divider */}
-          <div className="my-5 h-px bg-slate-100" />
+          <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <QuickAction
+              icon={<BookOpen className="h-4 w-4" />}
+              title="Classes"
+              description="Manage your classes"
+              onClick={() => router.push("/teacher/classes")}
+            />
 
-          {/* =========================
-              QUICK ACTIONS
-          ========================== */}
+            <QuickAction
+              icon={<ClipboardList className="h-4 w-4" />}
+              title="Assignments"
+              description="Create and review work"
+              onClick={() => router.push("/teacher/assignments")}
+            />
 
-          <div>
-
-            <div className="mb-3 flex items-center justify-between">
-
-              <div>
-                <h2 className="text-xs font-bold text-slate-800">
-                  Quick Actions
-                </h2>
-
-                <p className="mt-0.5 text-[10px] text-slate-400">
-                  Frequently used teacher tools
-                </p>
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-
-              {actions.map((action) => {
-                const Icon = action.icon;
-
-                return (
-                  <button
-                    key={action.label}
-                    type="button"
-                    className="
-                      group
-                      flex
-                      cursor-pointer
-                      items-center
-                      justify-between
-                      rounded-xl
-                      border
-                      border-slate-200
-                      bg-white
-                      px-3
-                      py-3
-                      text-left
-                      transition-all
-                      duration-300
-                      hover:-translate-y-0.5
-                      hover:border-blue-200
-                      hover:bg-blue-50/40
-                      hover:shadow-md
-                      active:translate-y-0
-                    "
-                  >
-
-                    <div className="flex items-center gap-3">
-
-                      {/* Icon */}
-                      <div
-                        className="
-                          flex
-                          h-9
-                          w-9
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-lg
-                          bg-slate-50
-                          text-slate-600
-                          transition-all
-                          duration-300
-                          group-hover:bg-blue-600
-                          group-hover:text-white
-                        "
-                      >
-                        <Icon size={16} strokeWidth={2} />
-                      </div>
-
-                      {/* Label */}
-                      <span
-                        className="
-                          text-xs
-                          font-semibold
-                          text-slate-700
-                          transition-colors
-                          group-hover:text-blue-700
-                        "
-                      >
-                        {action.label}
-                      </span>
-
-                    </div>
-
-                    {/* Arrow */}
-                    <ArrowRight
-                      size={14}
-                      className="
-                        text-slate-300
-                        transition-all
-                        duration-300
-                        group-hover:translate-x-0.5
-                        group-hover:text-blue-500
-                      "
-                    />
-
-                  </button>
-                );
-              })}
-
-            </div>
-
+            <QuickAction
+              icon={<MessageSquare className="h-4 w-4" />}
+              title="Messages"
+              description="Check student messages"
+              onClick={() => router.push("/teacher/messages")}
+            />
           </div>
-
         </div>
       </div>
-    </div>
+    </section>
+  );
+}
+
+function QuickAction({
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200 transition group-hover:ring-indigo-200">
+          {icon}
+        </span>
+
+        <span className="min-w-0">
+          <span className="block text-xs font-bold text-slate-800">
+            {title}
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] font-medium text-slate-400">
+            {description}
+          </span>
+        </span>
+      </span>
+
+      <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+    </button>
   );
 }

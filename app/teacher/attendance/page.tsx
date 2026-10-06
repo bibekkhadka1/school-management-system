@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardCheck,
   Search,
@@ -26,120 +26,24 @@ type Student = {
   reason: string;
 };
 
-const students: Student[] = [
-  {
-    id: 1,
-    name: "Aarav Sharma",
-    rollNo: "BCA-3A-001",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 2,
-    name: "Anish Gautam",
-    rollNo: "BCA-3A-002",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 3,
-    name: "Aayush Karki",
-    rollNo: "BCA-3A-003",
-    status: "absent",
-    reason: "",
-  },
-  {
-    id: 4,
-    name: "Bibek Thapa",
-    rollNo: "BCA-3A-004",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 5,
-    name: "Dipesh Adhikari",
-    rollNo: "BCA-3A-005",
-    status: "late",
-    reason: "Arrived late",
-  },
-  {
-    id: 6,
-    name: "Kiran Shrestha",
-    rollNo: "BCA-3A-006",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 7,
-    name: "Nischal Rai",
-    rollNo: "BCA-3A-007",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 8,
-    name: "Pratik Bhandari",
-    rollNo: "BCA-3A-008",
-    status: "absent",
-    reason: "",
-  },
-  {
-    id: 9,
-    name: "Rohan Karki",
-    rollNo: "BCA-3A-009",
-    status: "present",
-    reason: "",
-  },
-  {
-    id: 10,
-    name: "Suman Rai",
-    rollNo: "BCA-3A-010",
-    status: "present",
-    reason: "",
-  },
-];
+type ClassItem = {
+  id: number;
+  name: string;
+  code: string;
+  room: string;
+  capacity: number;
+  schedule: string | null;
+  class_time: string | null;
+  status: "Active" | "Upcoming";
+  created_at: string;
+  student_count: number;
+};
 
-const classOptions = [
-  {
-    value: "BCA-3A",
-    label: "BCA 3rd Semester A",
-    subject: "DBMS",
-  },
-  {
-    value: "BCA-3B",
-    label: "BCA 3rd Semester B",
-    subject: "Web Development",
-  },
-  {
-    value: "BCA-4A",
-    label: "BCA 4th Semester A",
-    subject: "Data Science & AI",
-  },
-  {
-    value: "CSIT-5A",
-    label: "BSc CSIT 5th Semester",
-    subject: "Operating Systems",
-  },
-  {
-    value: "BIT-2A",
-    label: "BIT 2nd Semester A",
-    subject: "Object-Oriented Programming",
-  },
-  {
-    value: "BCA-6A",
-    label: "BCA 6th Semester A",
-    subject: "Mobile Application Dev",
-  },
-];
-
-const subjectOptions = [
-  "DBMS",
-  "Web Development",
-  "Data Science & AI",
-  "Operating Systems",
-  "Object-Oriented Programming",
-  "Mobile Application Dev",
-];
+type Subject = {
+  id: number;
+  name: string;
+  code: string;
+};
 
 type StatCardProps = {
   icon: React.ReactNode;
@@ -150,10 +54,16 @@ type StatCardProps = {
 };
 
 export default function AttendancePage() {
-  const [selectedClass, setSelectedClass] = useState("BCA-3A");
+  // Classes loaded from PostgreSQL
+  const [classes, setClasses] = useState<ClassItem[]>([]);
 
-  const [selectedSubject, setSelectedSubject] =
-    useState("DBMS");
+  // Store the actual database class ID
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  // Subjects belonging to the selected class.
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  // Store the selected database subject ID.
+  const [selectedSubject, setSelectedSubject] = useState("");
 
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split("T")[0];
@@ -161,22 +71,201 @@ export default function AttendancePage() {
 
   const [search, setSearch] = useState("");
 
-  const [attendance, setAttendance] =
-    useState<Student[]>(students);
+  // Students loaded from PostgreSQL
+  const [attendance, setAttendance] = useState<Student[]>([]);
+
+  // Show loading while students are being fetched
+  const [loadingStudents, setLoadingStudents] = useState(true);
 
   const [saved, setSaved] = useState(false);
+  // Stores a message that should be shown to the user on the page.
+  const [errorMessage, setErrorMessage] = useState("");
 
   /* ===================================================== */
   /* CURRENT CLASS */
   /* ===================================================== */
 
   const currentClass = useMemo(() => {
-    return (
-      classOptions.find(
-        (item) => item.value === selectedClass
-      ) || classOptions[0]
-    );
-  }, [selectedClass]);
+    return classes.find((item) => item.id === selectedClassId);
+  }, [classes, selectedClassId]);
+
+  /* ===================================================== */
+  /* LOAD STUDENTS FROM DATABASE */
+  /* ===================================================== */
+  // Load students and subjects whenever the selected class changes.
+  useEffect(() => {
+    const loadClassData = async () => {
+      // Don't request anything until a class has been selected.
+      if (!selectedClassId) {
+        setAttendance([]);
+        setSubjects([]);
+        setSelectedSubject("");
+        return;
+      }
+
+      try {
+        setLoadingStudents(true);
+
+        // Get the selected class, its students, and its subjects.
+        const response = await fetch(
+          `http://localhost:5000/api/classes/${selectedClassId}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch class students");
+        }
+
+        const classData = await response.json();
+
+        // Store subjects assigned to this class.
+        setSubjects(classData.subjects ?? []);
+
+        // Automatically select the first subject
+        // only when the class changes.
+        if (classData.subjects && classData.subjects.length > 0) {
+          setSelectedSubject(String(classData.subjects[0].id));
+        } else {
+          setSelectedSubject("");
+        }
+
+        // Convert database students into the format
+        // already used by the attendance UI.
+        const databaseStudents: Student[] = classData.students.map(
+          (student: {
+            id: number;
+            first_name: string;
+            last_name: string;
+            roll_no: string;
+          }) => ({
+            id: student.id,
+            name: `${student.first_name} ${student.last_name}`,
+            rollNo: student.roll_no,
+            status: "present",
+            reason: "",
+          }),
+        );
+
+        setAttendance(databaseStudents);
+      } catch (error) {
+        console.error("Failed to load class data:", error);
+        setAttendance([]);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    loadClassData();
+  }, [selectedClassId]);
+
+  // Load saved attendance whenever
+  // the selected class, subject, or date changes.
+  useEffect(() => {
+    const loadAttendance = async () => {
+      // Don't request attendance until all required values exist.
+      if (!selectedClassId || !selectedSubject || !selectedDate) {
+        return;
+      }
+
+      try {
+        // Get attendance for this exact class + subject + date.
+        const response = await fetch(
+          `http://localhost:5000/api/attendance?classId=${selectedClassId}&subjectId=${selectedSubject}&date=${selectedDate}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendance");
+        }
+
+        const savedAttendance = await response.json();
+
+        // Create a lookup using student ID.
+        // Store both the attendance status and reason.
+        // Create a lookup using student ID.
+        // Each student maps to both their saved status and reason.
+        const attendanceMap = new Map<
+          number,
+          {
+            status: "Present" | "Absent" | "Late";
+            reason: string;
+          }
+        >();
+
+        savedAttendance.forEach(
+          (record: {
+            student_id: number;
+            status: "Present" | "Absent" | "Late";
+            reason: string | null;
+          }) => {
+            attendanceMap.set(record.student_id, {
+              status: record.status,
+              reason: record.reason ?? "",
+            });
+          },
+        );
+
+        // Apply both the saved status and saved reason
+        // to the students already displayed on the page.
+        // Apply the saved status and reason to the students.
+        setAttendance((currentStudents) =>
+          currentStudents.map((student) => {
+            const savedAttendance = attendanceMap.get(student.id);
+
+            return {
+              ...student,
+
+              // Restore the saved status.
+              status: savedAttendance
+                ? savedAttendance.status === "Present"
+                  ? "present"
+                  : savedAttendance.status === "Absent"
+                    ? "absent"
+                    : "late"
+                : "present",
+
+              // Restore the saved reason.
+              reason: savedAttendance ? savedAttendance.reason : "",
+            };
+          }),
+        );
+      } catch (error) {
+        console.error("Failed to load attendance:", error);
+      }
+    };
+
+    loadAttendance();
+  }, [selectedClassId, selectedSubject, selectedDate]);
+
+  useEffect(() => {
+    const loadClasses = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/classes");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch classes");
+        }
+
+        // The backend returns an object:
+        // {
+        //   classes: [...],
+        //   overallAttendance: number
+        // }
+        const data = await response.json();
+
+        // Extract only the classes array.
+        // This keeps the existing classes state as an array.
+        setClasses(data.classes);
+
+        // Automatically select the first class.
+        if (data.classes.length > 0) {
+          setSelectedClassId(data.classes[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load classes:", error);
+      }
+    };
+
+    loadClasses();
+  }, []);
 
   /* ===================================================== */
   /* FILTER STUDENTS */
@@ -191,12 +280,8 @@ export default function AttendancePage() {
 
     return attendance.filter(
       (student) =>
-        student.name
-          .toLowerCase()
-          .includes(searchValue) ||
-        student.rollNo
-          .toLowerCase()
-          .includes(searchValue)
+        student.name.toLowerCase().includes(searchValue) ||
+        student.rollNo.toLowerCase().includes(searchValue),
     );
   }, [search, attendance]);
 
@@ -207,33 +292,30 @@ export default function AttendancePage() {
   const totalStudents = attendance.length;
 
   const presentCount = attendance.filter(
-    (student) => student.status === "present"
+    (student) => student.status === "present",
   ).length;
 
   const absentCount = attendance.filter(
-    (student) => student.status === "absent"
+    (student) => student.status === "absent",
   ).length;
 
   const lateCount = attendance.filter(
-    (student) => student.status === "late"
+    (student) => student.status === "late",
   ).length;
+  /* ===================================================== */
+  /* ATTENDANCE PERCENTAGE */
+  /* ===================================================== */
 
+  // Calculate attendance percentage from students marked Present.
+  // This matches the attendance calculation currently used by the backend.
   const attendancePercentage =
-    totalStudents > 0
-      ? Math.round(
-          ((presentCount + lateCount) / totalStudents) *
-            100
-        )
-      : 0;
+    totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
 
   /* ===================================================== */
   /* UPDATE STATUS */
   /* ===================================================== */
 
-  const updateStatus = (
-    id: number,
-    status: AttendanceStatus
-  ) => {
+  const updateStatus = (id: number, status: AttendanceStatus) => {
     setAttendance((current) =>
       current.map((student) =>
         student.id === id
@@ -241,8 +323,8 @@ export default function AttendancePage() {
               ...student,
               status,
             }
-          : student
-      )
+          : student,
+      ),
     );
 
     setSaved(false);
@@ -252,24 +334,21 @@ export default function AttendancePage() {
   /* UPDATE REASON */
   /* ===================================================== */
 
-  const updateReason = (
-    id: number,
-    reason: string
-  ) => {
-    setAttendance((current) =>
-      current.map((student) =>
-        student.id === id
+  const updateReason = (studentId: number, reason: string) => {
+    setAttendance((currentStudents) =>
+      currentStudents.map((student) =>
+        student.id === studentId
           ? {
               ...student,
               reason,
             }
-          : student
-      )
+          : student,
+      ),
     );
 
+    // Remove the old success message when something is changed.
     setSaved(false);
   };
-
   /* ===================================================== */
   /* MARK ALL PRESENT */
   /* ===================================================== */
@@ -280,7 +359,7 @@ export default function AttendancePage() {
         ...student,
         status: "present",
         reason: "",
-      }))
+      })),
     );
 
     setSaved(false);
@@ -295,7 +374,7 @@ export default function AttendancePage() {
       current.map((student) => ({
         ...student,
         status: "absent",
-      }))
+      })),
     );
 
     setSaved(false);
@@ -305,27 +384,73 @@ export default function AttendancePage() {
   /* SAVE ATTENDANCE */
   /* ===================================================== */
 
-  const handleSave = () => {
-    const payload = {
-      class: selectedClass,
-      subject: selectedSubject,
-      date: selectedDate,
-      students: attendance,
-    };
+  const handleSave = async () => {
+    // Make sure a database class has been selected.
+    if (!selectedClassId) {
+      // Show the error message on the page instead of the browser console.
+      setErrorMessage("Please select a class before saving attendance.");
+      return;
+    }
+    // Make sure a subject has been selected.
+    if (!selectedSubject) {
+      setErrorMessage("Please select a subject before saving attendance.");
+      return;
+    }
 
-    console.log("Attendance:", payload);
+    try {
+      // Clear any previous error message.
+      setErrorMessage("");
 
-    setSaved(true);
+      const payload = {
+        // Use the selected database class ID.
+        classId: selectedClassId,
+        subjectId: Number(selectedSubject),
+        date: selectedDate,
 
-    window.setTimeout(() => {
-      setSaved(false);
-    }, 3000);
+        students: attendance.map((student) => ({
+          studentId: student.id,
+
+          // Send the attendance status to the backend.
+          status:
+            student.status === "present"
+              ? "Present"
+              : student.status === "absent"
+                ? "Absent"
+                : "Late",
+
+          // Send the reason/remark to the backend.
+          reason: student.reason,
+        })),
+      };
+
+      const response = await fetch("http://localhost:5000/api/attendance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save attendance");
+      }
+
+      setSaved(true);
+
+      window.setTimeout(() => {
+        setSaved(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to save attendance:", error);
+
+      // Show the save error on the page.
+      setErrorMessage("Failed to save attendance. Please try again.");
+    }
   };
 
   return (
     <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
       <div className="mx-auto max-w-[1500px]">
-
         {/* ==================== HEADER ==================== */}
         <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
@@ -339,8 +464,7 @@ export default function AttendancePage() {
             </h1>
 
             <p className="mt-1 text-sm font-medium text-slate-500">
-              Record and manage student attendance for your
-              classes.
+              Record and manage student attendance for your classes.
             </p>
           </div>
 
@@ -352,17 +476,21 @@ export default function AttendancePage() {
             <Save size={17} />
             Save Attendance
           </button>
+
+          {saved && (
+            <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+              Attendance saved successfully.
+            </div>
+          )}
         </div>
 
         {/* ==================== SUCCESS ALERT ==================== */}
-        {saved && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            <Check size={17} />
 
-            Attendance has been saved successfully.
+        {errorMessage && (
+          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            {errorMessage}
           </div>
         )}
-
         {/* ==================== KPI CARDS ==================== */}
         <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -406,13 +534,11 @@ export default function AttendancePage() {
             </h2>
 
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Select the class, subject and date for this
-              attendance session.
+              Select the class, subject and date for this attendance session.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-
             {/* Class */}
             <div>
               <label className="mb-2 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -421,30 +547,21 @@ export default function AttendancePage() {
 
               <div className="relative">
                 <select
-                  value={selectedClass}
+                  value={selectedClassId ?? ""}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const classId = Number(e.target.value);
 
-                    setSelectedClass(value);
+                    // Store the selected database class ID.
+                    setSelectedClassId(classId);
 
-                    const selected = classOptions.find(
-                      (item) => item.value === value
-                    );
-
-                    if (selected) {
-                      setSelectedSubject(selected.subject);
-                    }
-
+                    // Reset the saved message when the class changes.
                     setSaved(false);
                   }}
                   className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                 >
-                  {classOptions.map((item) => (
-                    <option
-                      key={item.value}
-                      value={item.value}
-                    >
-                      {item.value} — {item.label}
+                  {classes.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.code} — {item.name}
                     </option>
                   ))}
                 </select>
@@ -466,17 +583,17 @@ export default function AttendancePage() {
                 <select
                   value={selectedSubject}
                   onChange={(e) => {
+                    // Store the selected database subject ID.
                     setSelectedSubject(e.target.value);
+
+                    // Reset the saved message when the subject changes.
                     setSaved(false);
                   }}
                   className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                 >
-                  {subjectOptions.map((subject) => (
-                    <option
-                      key={subject}
-                      value={subject}
-                    >
-                      {subject}
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={String(subject.id)}>
+                      {subject.code} — {subject.name}
                     </option>
                   ))}
                 </select>
@@ -521,7 +638,9 @@ export default function AttendancePage() {
               </span>
 
               <p className="mt-0.5 text-xs font-bold text-slate-700">
-                {currentClass.label}
+                {currentClass
+                  ? `${currentClass.code} — ${currentClass.name}`
+                  : "Select a class"}
               </p>
             </div>
 
@@ -529,9 +648,20 @@ export default function AttendancePage() {
               <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                 Subject
               </span>
-
               <p className="mt-0.5 text-xs font-bold text-slate-700">
-                {selectedSubject}
+                {subjects.find(
+                  (subject) => String(subject.id) === selectedSubject,
+                )
+                  ? `${
+                      subjects.find(
+                        (subject) => String(subject.id) === selectedSubject,
+                      )?.code
+                    } — ${
+                      subjects.find(
+                        (subject) => String(subject.id) === selectedSubject,
+                      )?.name
+                    }`
+                  : "Select a subject"}
               </p>
             </div>
 
@@ -549,7 +679,6 @@ export default function AttendancePage() {
 
         {/* ==================== ATTENDANCE TABLE ==================== */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
           {/* Table Header */}
           <div className="border-b border-slate-200 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -559,7 +688,11 @@ export default function AttendancePage() {
                 </h2>
 
                 <p className="mt-1 text-xs font-medium text-slate-500">
-                  Mark attendance for {currentClass.label}.
+                  Mark attendance for{" "}
+                  {currentClass
+                    ? `${currentClass.code} — ${currentClass.name}`
+                    : "the selected class"}
+                  .
                 </p>
               </div>
 
@@ -627,118 +760,121 @@ export default function AttendancePage() {
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {filteredStudents.map((student) => (
-                  <tr
-                    key={student.id}
-                    className="transition hover:bg-slate-50/70"
-                  >
-                    {/* Student */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xs font-bold text-blue-600">
-                          {student.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
+                {loadingStudents ? (
+                  /* Show a simple loading message while students are coming from the backend. */
+                  <tr>
+                    <td colSpan={4} className="px-5 py-16 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        {/* Loading spinner */}
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
 
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">
-                            {student.name}
-                          </p>
+                        <p className="mt-4 text-sm font-bold text-slate-700">
+                          Loading students...
+                        </p>
 
-                          <p className="mt-0.5 text-[10px] font-medium text-slate-400">
-                            Student
-                          </p>
-                        </div>
+                        <p className="mt-1 text-xs font-medium text-slate-400">
+                          Getting students from the database.
+                        </p>
                       </div>
-                    </td>
-
-                    {/* Roll Number */}
-                    <td className="px-5 py-4">
-                      <span className="text-xs font-semibold text-slate-600">
-                        {student.rollNo}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStatus(
-                              student.id,
-                              "present"
-                            )
-                          }
-                          className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
-                            student.status === "present"
-                              ? "bg-emerald-600 text-white"
-                              : "border border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
-                          }`}
-                        >
-                          Present
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStatus(
-                              student.id,
-                              "absent"
-                            )
-                          }
-                          className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
-                            student.status === "absent"
-                              ? "bg-rose-600 text-white"
-                              : "border border-slate-200 bg-white text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                          }`}
-                        >
-                          Absent
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStatus(
-                              student.id,
-                              "late"
-                            )
-                          }
-                          className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
-                            student.status === "late"
-                              ? "bg-amber-500 text-white"
-                              : "border border-slate-200 bg-white text-slate-500 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
-                          }`}
-                        >
-                          Late
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* Reason */}
-                    <td className="px-5 py-4">
-                      <input
-                        type="text"
-                        value={student.reason}
-                        onChange={(e) =>
-                          updateReason(
-                            student.id,
-                            e.target.value
-                          )
-                        }
-                        placeholder={
-                          student.status === "present"
-                            ? "Optional note"
-                            : "Enter reason..."
-                        }
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                      />
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  /* Show students after the backend request finishes. */
+                  filteredStudents.map((student) => (
+                    <tr
+                      key={student.id}
+                      className="transition hover:bg-slate-50/70"
+                    >
+                      {/* Student */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xs font-bold text-blue-600">
+                            {student.name
+                              .split(" ")
+                              .map((part) => part[0])
+                              .join("")
+                              .slice(0, 2)}
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">
+                              {student.name}
+                            </p>
+
+                            <p className="mt-0.5 text-[10px] font-medium text-slate-400">
+                              Student
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Roll Number */}
+                      <td className="px-5 py-4">
+                        <span className="text-xs font-semibold text-slate-600">
+                          {student.rollNo}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updateStatus(student.id, "present")}
+                            className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
+                              student.status === "present"
+                                ? "bg-emerald-600 text-white"
+                                : "border border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+                            }`}
+                          >
+                            Present
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => updateStatus(student.id, "absent")}
+                            className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
+                              student.status === "absent"
+                                ? "bg-rose-600 text-white"
+                                : "border border-slate-200 bg-white text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                            }`}
+                          >
+                            Absent
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => updateStatus(student.id, "late")}
+                            className={`rounded-lg px-3 py-2 text-[10px] font-bold transition ${
+                              student.status === "late"
+                                ? "bg-amber-500 text-white"
+                                : "border border-slate-200 bg-white text-slate-500 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
+                            }`}
+                          >
+                            Late
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Reason */}
+                      <td className="px-5 py-4">
+                        <input
+                          type="text"
+                          value={student.reason}
+                          onChange={(e) =>
+                            updateReason(student.id, e.target.value)
+                          }
+                          placeholder={
+                            student.status === "present"
+                              ? "Optional note"
+                              : "Enter reason..."
+                          }
+                          className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -763,14 +899,10 @@ export default function AttendancePage() {
           {/* Footer */}
           <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-              <AlertCircle
-                size={14}
-                className="text-slate-400"
-              />
+              <AlertCircle size={14} className="text-slate-400" />
 
               <span>
-                {filteredStudents.length} of{" "}
-                {totalStudents} students
+                {filteredStudents.length} of {totalStudents} students
               </span>
             </div>
 
@@ -821,9 +953,7 @@ function StatCard({
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-bold text-slate-500">
-            {label}
-          </p>
+          <p className="text-xs font-bold text-slate-500">{label}</p>
 
           <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
             {value}

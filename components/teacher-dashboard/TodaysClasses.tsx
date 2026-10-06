@@ -1,401 +1,157 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   CalendarDays,
   Clock3,
-  ArrowRight,
   MapPin,
+  Users,
 } from "lucide-react";
 
 const classes = [
   {
-    time: "9:00 AM - 10:30 AM",
+    code: "BCA-3A",
     subject: "Database Management Systems",
-    className: "BCA 3rd",
-    room: "Room 201",
-    status: "COMPLETED",
+    time: "10:00 AM – 11:30 AM",
+    room: "Room 204",
+    students: 42,
+    status: "Upcoming",
   },
   {
-    time: "11:00 AM - 12:30 PM",
+    code: "BCA-3B",
     subject: "Web Development",
-    className: "BCA 3rd",
-    room: "Lab 2",
-    status: "IN PROGRESS",
+    time: "11:30 AM – 1:00 PM",
+    room: "Room 205",
+    students: 38,
+    status: "Upcoming",
   },
   {
-    time: "2:00 PM - 3:30 PM",
-    subject: "Data Science Fundamentals",
-    className: "BCA 4th",
-    room: "Room 205",
-    status: "UPCOMING",
+    code: "BCA-4A",
+    subject: "Data Science & AI",
+    time: "2:00 PM – 3:30 PM",
+    room: "Room 301",
+    students: 45,
+    status: "Upcoming",
   },
 ];
 
 export default function TodaysClasses() {
+  const router = useRouter();
+
   return (
-    <div
-      className="
-        group
-        relative
-        overflow-hidden
-        rounded-2xl
-        border
-        border-slate-200/80
-        bg-white
-        p-5
-        shadow-sm
-        transition-all
-        duration-300
-        hover:border-slate-300
-        hover:shadow-lg
-      "
-    >
-      {/* Decorative Background */}
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -right-16
-          -top-16
-          h-40
-          w-40
-          rounded-full
-          bg-blue-500/[0.04]
-          blur-3xl
-        "
-      />
+    <section className="h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900">
+              Today&apos;s Classes
+            </h2>
 
-      <div className="relative">
-
-        {/* ================= HEADER ================= */}
-
-        <div className="mb-5 flex items-center justify-between gap-3">
-
-          <div className="flex items-center gap-3">
-
-            {/* Icon */}
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                shrink-0
-                items-center
-                justify-center
-                rounded-xl
-                bg-blue-50
-                text-blue-600
-              "
-            >
-              <CalendarDays
-                size={18}
-                strokeWidth={2}
-              />
-            </div>
-
-            {/* Title */}
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Today&apos;s Classes
-              </h2>
-
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                Your teaching schedule for today
-              </p>
-            </div>
-
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
+              {classes.length}
+            </span>
           </div>
 
-          {/* View Schedule */}
-          <button
-            type="button"
-            className="
-              flex
-              shrink-0
-              cursor-pointer
-              items-center
-              gap-1
-              rounded-lg
-              px-2.5
-              py-1.5
-              text-[11px]
-              font-semibold
-              text-blue-600
-              transition-all
-              duration-200
-              hover:bg-blue-50
-              hover:text-blue-700
-            "
-          >
-            View Schedule
-
-            <ArrowRight
-              size={13}
-            />
-          </button>
-
+          <p className="mt-1 text-[11px] font-medium text-slate-400">
+            Your scheduled classes for today
+          </p>
         </div>
 
-        {/* ================= CLASSES ================= */}
+        <button
+          type="button"
+          onClick={() => router.push("/teacher/classes")}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-indigo-600 transition hover:bg-indigo-50"
+        >
+          View all
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
-        <div className="space-y-3">
-
-          {classes.map((item, index) => {
-
-            const isCurrent =
-              item.status === "IN PROGRESS";
-
-            const isCompleted =
-              item.status === "COMPLETED";
-
-            return (
-              <div
-                key={index}
-                className={`
-                  group/class
-                  relative
-                  overflow-hidden
-                  rounded-xl
-                  border
-                  p-4
-                  transition-all
-                  duration-300
-                  hover:-translate-y-0.5
-
-                  ${
-                    isCurrent
-                      ? "border-blue-200 bg-blue-50/40 shadow-sm"
-                      : "border-slate-100 bg-slate-50/40 hover:border-slate-200 hover:bg-white hover:shadow-sm"
-                  }
-                `}
-              >
-
-                {/* Current Class Indicator */}
-                {isCurrent && (
-                  <div
-                    className="
-                      absolute
-                      left-0
-                      top-0
-                      h-full
-                      w-1
-                      bg-blue-600
-                    "
-                  />
-                )}
-
-                <div className="flex items-center justify-between gap-4">
-
-                  {/* ================= LEFT CONTENT ================= */}
-
-                  <div className="flex min-w-0 items-start gap-3">
-
-                    {/* Time Icon */}
-                    <div
-                      className={`
-                        mt-0.5
-                        flex
-                        h-9
-                        w-9
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-lg
-
-                        ${
-                          isCurrent
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-white text-slate-400"
-                        }
-                      `}
-                    >
-                      <Clock3
-                        size={16}
-                        strokeWidth={2}
-                      />
-                    </div>
-
-                    {/* Class Details */}
-                    <div className="min-w-0">
-
-                      {/* Time + Live */}
-                      <div className="flex flex-wrap items-center gap-2">
-
-                        <p
-                          className="
-                            text-[10px]
-                            font-semibold
-                            text-slate-400
-                          "
-                        >
-                          {item.time}
-                        </p>
-
-                        {isCurrent && (
-                          <span
-                            className="
-                              inline-flex
-                              items-center
-                              gap-1
-                              rounded-full
-                              bg-blue-100
-                              px-2
-                              py-0.5
-                              text-[8px]
-                              font-bold
-                              uppercase
-                              tracking-wide
-                              text-blue-700
-                            "
-                          >
-                            <span
-                              className="
-                                h-1.5
-                                w-1.5
-                                animate-pulse
-                                rounded-full
-                                bg-blue-600
-                              "
-                            />
-
-                            Live
-                          </span>
-                        )}
-
-                      </div>
-
-                      {/* Subject */}
-                      <p
-                        className="
-                          mt-1
-                          truncate
-                          text-sm
-                          font-bold
-                          text-slate-800
-                          transition-colors
-                          duration-200
-                          group-hover:text-blue-700
-                        "
-                      >
-                        {item.subject}
-                      </p>
-
-                      {/* Class + Room */}
-                      <div
-                        className="
-                          mt-1.5
-                          flex
-                          flex-wrap
-                          items-center
-                          gap-3
-                        "
-                      >
-
-                        <span
-                          className="
-                            text-[10px]
-                            font-medium
-                            text-slate-500
-                          "
-                        >
-                          {item.className}
-                        </span>
-
-                        <span
-                          className="
-                            flex
-                            items-center
-                            gap-1
-                            text-[10px]
-                            font-medium
-                            text-slate-400
-                          "
-                        >
-                          <MapPin size={10} />
-
-                          {item.room}
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                  {/* ================= STATUS ================= */}
-
-                  <span
-                    className={`
-                      shrink-0
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-[8px]
-                      font-bold
-                      tracking-wide
-
-                      ${
-                        isCompleted
-                          ? "bg-emerald-50 text-emerald-600"
-                          : isCurrent
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-500"
-                      }
-                    `}
-                  >
-                    {item.status}
-                  </span>
-
+      <div className="divide-y divide-slate-100">
+        {classes.map((item, index) => (
+          <div
+            key={item.code}
+            className="group px-5 py-4 transition hover:bg-slate-50/70"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xs font-black text-indigo-600">
+                  {String(index + 1).padStart(2, "0")}
                 </div>
 
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-900">
+                      {item.code}
+                    </h3>
+
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-600">
+                    {item.subject}
+                  </p>
+                </div>
               </div>
-            );
-          })}
 
-        </div>
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/teacher/classes/${encodeURIComponent(item.code)}`,
+                  )
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                aria-label={`Open ${item.code}`}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
 
-        {/* ================= FOOTER ================= */}
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Info
+                icon={<Clock3 className="h-3.5 w-3.5" />}
+                text={item.time}
+              />
 
-        <div
-          className="
-            mt-4
-            flex
-            items-center
-            justify-between
-            border-t
-            border-slate-100
-            pt-3
-          "
-        >
+              <Info
+                icon={<MapPin className="h-3.5 w-3.5" />}
+                text={item.room}
+              />
 
-          <span
-            className="
-              text-[10px]
-              font-medium
-              text-slate-400
-            "
-          >
-            3 classes scheduled today
-          </span>
-
-          <button
-            type="button"
-            className="
-              cursor-pointer
-              text-[10px]
-              font-semibold
-              text-slate-500
-              transition-colors
-              duration-200
-              hover:text-blue-600
-            "
-          >
-            Full schedule →
-          </button>
-
-        </div>
-
+              <Info
+                icon={<Users className="h-3.5 w-3.5" />}
+                text={`${item.students} students`}
+              />
+            </div>
+          </div>
+        ))}
       </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-3">
+        <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+          <CalendarDays className="h-3.5 w-3.5" />
+          Schedule is based on your current timetable
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Info({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-2 text-[10px] font-semibold text-slate-500">
+      <span className="text-slate-400">{icon}</span>
+      <span className="truncate">{text}</span>
     </div>
   );
 }

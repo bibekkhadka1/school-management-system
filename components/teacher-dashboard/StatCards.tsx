@@ -1,272 +1,112 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
+  ArrowUpRight,
   BookOpen,
-  Users,
-  ClipboardCheck,
   ClipboardList,
   MessageSquare,
-  TrendingUp,
-  ArrowUpRight,
+  Users,
 } from "lucide-react";
 
 const stats = [
   {
-    title: "MY CLASSES",
-    value: "06",
-    description: "Currently assigned",
+    title: "Active Classes",
+    value: "6",
+    description: "Classes currently assigned",
+    change: "+12%",
     icon: BookOpen,
-    accent: "blue",
-    trend: "+1 this term",
+    iconClass: "bg-indigo-50 text-indigo-600",
+    hoverClass: "hover:border-indigo-200",
+    href: "/teacher/classes",
   },
   {
-    title: "TOTAL STUDENTS",
-    value: "184",
-    description: "Assigned to you",
+    title: "Total Students",
+    value: "244",
+    description: "Students across your classes",
+    change: "+8%",
     icon: Users,
-    accent: "indigo",
-    trend: "+12 active",
+    iconClass: "bg-blue-50 text-blue-600",
+    hoverClass: "hover:border-blue-200",
+    href: "/teacher/students",
   },
   {
-    title: "ATTENDANCE",
-    value: "87.4%",
-    description: "Avg. this month",
-    icon: ClipboardCheck,
-    accent: "emerald",
-    trend: "+2.4%",
+    title: "Attendance Rate",
+    value: "94.3%",
+    description: "Overall class attendance",
+    change: "+2.4%",
+    icon: Users,
+    iconClass: "bg-emerald-50 text-emerald-600",
+    hoverClass: "hover:border-emerald-200",
+    href: "/teacher/attendance",
   },
   {
-    title: "ASSIGNMENTS",
-    value: "12",
-    description: "To review",
+    title: "Pending Assignments",
+    value: "8",
+    description: "Assignments requiring review",
+    change: "4 urgent",
     icon: ClipboardList,
-    accent: "amber",
-    trend: "4 urgent",
+    iconClass: "bg-orange-50 text-orange-600",
+    hoverClass: "hover:border-orange-200",
+    href: "/teacher/assignments",
   },
   {
-    title: "MESSAGES",
-    value: "03",
-    description: "Unread inbox",
+    title: "Unread Messages",
+    value: "7",
+    description: "Messages awaiting response",
+    change: "View now",
     icon: MessageSquare,
-    accent: "violet",
-    trend: "New today",
+    iconClass: "bg-violet-50 text-violet-600",
+    hoverClass: "hover:border-violet-200",
+    href: "/teacher/messages",
   },
 ];
 
-const cardThemes = {
-  blue: {
-    icon: "bg-blue-50 text-blue-600",
-    glow: "group-hover:bg-blue-500",
-    gradient:
-      "from-blue-500/[0.08] via-blue-500/[0.02] to-transparent",
-    trend:
-      "bg-blue-50 text-blue-700 group-hover:bg-blue-100",
-  },
-
-  indigo: {
-    icon: "bg-indigo-50 text-indigo-600",
-    glow: "group-hover:bg-indigo-500",
-    gradient:
-      "from-indigo-500/[0.08] via-indigo-500/[0.02] to-transparent",
-    trend:
-      "bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100",
-  },
-
-  emerald: {
-    icon: "bg-emerald-50 text-emerald-600",
-    glow: "group-hover:bg-emerald-500",
-    gradient:
-      "from-emerald-500/[0.08] via-emerald-500/[0.02] to-transparent",
-    trend:
-      "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100",
-  },
-
-  amber: {
-    icon: "bg-amber-50 text-amber-600",
-    glow: "group-hover:bg-amber-500",
-    gradient:
-      "from-amber-500/[0.08] via-amber-500/[0.02] to-transparent",
-    trend:
-      "bg-amber-50 text-amber-700 group-hover:bg-amber-100",
-  },
-
-  violet: {
-    icon: "bg-violet-50 text-violet-600",
-    glow: "group-hover:bg-violet-500",
-    gradient:
-      "from-violet-500/[0.08] via-violet-500/[0.02] to-transparent",
-    trend:
-      "bg-violet-50 text-violet-700 group-hover:bg-violet-100",
-  },
-};
-
 export default function StatCards() {
+  const router = useRouter();
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-
       {stats.map((stat) => {
         const Icon = stat.icon;
-        const theme =
-          cardThemes[stat.accent as keyof typeof cardThemes];
 
         return (
-          <div
+          <button
             key={stat.title}
-            className={`
-              group relative overflow-hidden
-              rounded-2xl border border-slate-200/80
-              bg-white
-              p-5
-              shadow-sm
-              transition-all duration-300 ease-out
-
-              hover:-translate-y-1
-              hover:border-slate-300
-              hover:shadow-xl
-            `}
+            type="button"
+            onClick={() => router.push(stat.href)}
+            className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${stat.hoverClass}`}
           >
-
-            {/* Soft background gradient */}
-            <div
-              className={`
-                pointer-events-none
-                absolute inset-0
-                bg-gradient-to-br ${theme.gradient}
-                opacity-0
-                transition-opacity duration-300
-                group-hover:opacity-100
-              `}
-            />
-
-            {/* Decorative glow */}
-            <div
-              className={`
-                absolute -right-8 -top-8
-                h-24 w-24
-                rounded-full
-                opacity-0
-                blur-2xl
-                transition-opacity duration-300
-                ${theme.glow}
-                group-hover:opacity-10
-              `}
-            />
-
-            <div className="relative">
-
-              {/* Header */}
-              <div className="flex items-center justify-between">
-
-                <span className="
-                  text-[10px]
-                  font-bold
-                  tracking-[0.8px]
-                  text-slate-500
-                  transition-colors
-                  group-hover:text-slate-700
-                ">
-                  {stat.title}
-                </span>
-
-                <div
-                  className={`
-                    flex h-10 w-10
-                    items-center justify-center
-                    rounded-xl
-                    ${theme.icon}
-                    transition-all duration-300
-                    group-hover:scale-105
-                  `}
-                >
-                  <Icon size={19} strokeWidth={2} />
-                </div>
-
+            <div className="flex items-start justify-between gap-3">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconClass}`}
+              >
+                <Icon className="h-5 w-5" />
               </div>
 
-              {/* Value */}
-              <div className="mt-5">
-
-                <p className="
-                  text-[30px]
-                  font-extrabold
-                  leading-none
-                  tracking-tight
-                  text-slate-900
-                  transition-transform
-                  duration-300
-                  group-hover:translate-x-0.5
-                ">
-                  {stat.value}
-                </p>
-
-              </div>
-
-              {/* Bottom */}
-              <div className="
-                mt-5
-                flex
-                items-center
-                justify-between
-                border-t
-                border-slate-100
-                pt-3
-              ">
-
-                <span className="
-                  text-[11px]
-                  font-medium
-                  text-slate-500
-                ">
-                  {stat.description}
-                </span>
-
-                <span
-                  className={`
-                    inline-flex
-                    items-center
-                    gap-1
-                    rounded-full
-                    px-2 py-1
-                    text-[9px]
-                    font-bold
-                    ${theme.trend}
-                    transition-colors
-                  `}
-                >
-                  <TrendingUp size={10} />
-                  {stat.trend}
-                </span>
-
-              </div>
-
+              <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-indigo-500" />
             </div>
 
-            {/* Hover arrow */}
-            <div className="
-              absolute
-              bottom-4
-              right-4
-              flex
-              h-6
-              w-6
-              items-center
-              justify-center
-              rounded-full
-              bg-slate-100
-              text-slate-500
-              opacity-0
-              transition-all
-              duration-300
-              group-hover:translate-x-0.5
-              group-hover:opacity-100
-            ">
-              <ArrowUpRight size={13} />
+            <p className="mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {stat.title}
+            </p>
+
+            <div className="mt-1 flex items-end justify-between gap-2">
+              <p className="text-2xl font-black tracking-tight text-slate-900">
+                {stat.value}
+              </p>
+
+              <span className="rounded-full bg-slate-50 px-2 py-1 text-[9px] font-bold text-slate-500">
+                {stat.change}
+              </span>
             </div>
 
-          </div>
+            <p className="mt-1 text-[10px] font-medium text-slate-400">
+              {stat.description}
+            </p>
+          </button>
         );
       })}
-
     </div>
   );
 }

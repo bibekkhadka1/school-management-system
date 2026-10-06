@@ -15,7 +15,7 @@ import {
 
 type PageProps = {
   params: Promise<{
-    classCode: string;
+    classId: string;
   }>;
 };
 
@@ -28,178 +28,114 @@ type Student = {
   status: "Active" | "Inactive";
 };
 
-type ClassInfo = {
+type ClassFromAPI = {
+  id: number;
   name: string;
   code: string;
   room: string;
-  schedule: string;
-  time: string;
+  capacity: number;
+  schedule: string | null;
+  class_time: string | null;
+  status: "Active" | "Upcoming";
+  created_at: string;
+
+  // Overall class attendance returned by the backend
   attendance: number;
-  subjects: string[];
-  students: Student[];
+
+  students: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    roll_no: string;
+    status: "Active" | "Inactive";
+
+    // Individual student attendance returned by the backend
+    attendance: number;
+  }[];
+
+  subjects: {
+    id: number;
+    name: string;
+    code: string;
+  }[];
 };
 
-const classData: Record<string, ClassInfo> = {
-  "BCA-3A": {
-    name: "BCA 3A",
-    code: "BCA-3A",
-    room: "Room 204",
-    schedule: "Sunday, Tuesday, Thursday",
-    time: "10:00 AM",
-    attendance: 94,
-    subjects: [
-      "DBMS",
-      "Web Development",
-      "Data Structures",
-      "Operating Systems",
-      "Computer Networks",
-      "Software Engineering",
-    ],
-    students: [
-      {
-        id: 1,
-        name: "Aarav Sharma",
-        email: "aarav.sharma@example.com",
-        rollNo: "BCA3A-001",
-        attendance: 96,
-        status: "Active",
-      },
-      {
-        id: 2,
-        name: "Priya Thapa",
-        email: "priya.thapa@example.com",
-        rollNo: "BCA3A-002",
-        attendance: 92,
-        status: "Active",
-      },
-      {
-        id: 3,
-        name: "Rohan Karki",
-        email: "rohan.karki@example.com",
-        rollNo: "BCA3A-003",
-        attendance: 89,
-        status: "Active",
-      },
-      {
-        id: 4,
-        name: "Sneha Adhikari",
-        email: "sneha.adhikari@example.com",
-        rollNo: "BCA3A-004",
-        attendance: 97,
-        status: "Active",
-      },
-      {
-        id: 5,
-        name: "Suman Rai",
-        email: "suman.rai@example.com",
-        rollNo: "BCA3A-005",
-        attendance: 91,
-        status: "Active",
-      },
-    ],
-  },
+type ClassInfo = {
+  id: number;
+  name: string;
+  code: string;
+  room: string;
+  schedule: string | null;
+  time: string | null;
+  attendance: number;
 
-  "BCA-3B": {
-    name: "BCA 3B",
-    code: "BCA-3B",
-    room: "Room 205",
-    schedule: "Sunday, Tuesday, Thursday",
-    time: "11:30 AM",
-    attendance: 91,
-    subjects: [
-      "DBMS",
-      "Web Development",
-      "Data Structures",
-      "Operating Systems",
-      "Computer Networks",
-      "Software Engineering",
-    ],
-    students: [],
-  },
+  subjects: {
+    id: number;
+    name: string;
+    code: string;
+  }[];
 
-  "BCA-4A": {
-    name: "BCA 4A",
-    code: "BCA-4A",
-    room: "Room 301",
-    schedule: "Monday, Wednesday, Friday",
-    time: "9:00 AM",
-    attendance: 96,
-    subjects: [
-      "Data Science",
-      "Artificial Intelligence",
-      "Cloud Computing",
-      "Software Engineering",
-      "Web Technology",
-      "Project Management",
-      "Cyber Security",
-    ],
-    students: [],
-  },
-
-  "CSIT-5A": {
-    name: "CSIT 5A",
-    code: "CSIT-5A",
-    room: "Lab 02",
-    schedule: "Monday, Wednesday, Friday",
-    time: "1:00 PM",
-    attendance: 92,
-    subjects: [
-      "Data Science",
-      "Operating Systems",
-      "Computer Networks",
-      "Artificial Intelligence",
-      "Database Systems",
-      "Web Technology",
-      "Project",
-    ],
-    students: [],
-  },
-
-  "BIT-2A": {
-    name: "BIT 2A",
-    code: "BIT-2A",
-    room: "Room 102",
-    schedule: "Sunday, Tuesday, Thursday",
-    time: "2:00 PM",
-    attendance: 89,
-    subjects: [
-      "Programming",
-      "Database Systems",
-      "Web Development",
-      "Computer Architecture",
-      "Mathematics",
-    ],
-    students: [],
-  },
-
-  "BCA-6A": {
-    name: "BCA 6A",
-    code: "BCA-6A",
-    room: "Room 401",
-    schedule: "Monday, Wednesday, Friday",
-    time: "3:30 PM",
-    attendance: 98,
-    subjects: [
-      "Data Science",
-      "Artificial Intelligence",
-      "Machine Learning",
-      "Project",
-      "Cloud Computing",
-      "Cyber Security",
-    ],
-    students: [],
-  },
+  students: Student[];
+  capacity: number;
+  status: "Active" | "Upcoming";
 };
 
 export default async function ManageClassPage({ params }: PageProps) {
-  const { classCode } = await params;
+  // Get the class ID from the URL.
+  // Example: /teacher/classes/1 → classId = "1"
+  const { classId } = await params;
 
-  const normalizedCode = decodeURIComponent(classCode)
-    .trim()
-    .toUpperCase();
+  let currentClass: ClassInfo | null = null;
 
-  const currentClass = classData[normalizedCode];
+  try {
+    // Request the selected class from our Express backend.
+    const response = await fetch(
+      `http://localhost:5000/api/classes/${classId}`,
+      {
+        cache: "no-store",
+      },
+    );
 
+    // If the backend successfully found the class
+    if (response.ok) {
+      const data: ClassFromAPI = await response.json();
+
+      // Convert backend data into the format used by this page.
+      currentClass = {
+        id: data.id,
+        name: data.name,
+        code: data.code,
+        room: data.room,
+        schedule: data.schedule,
+        time: data.class_time,
+
+        attendance: data.attendance,
+        subjects: data.subjects,
+
+        // Students now come from PostgreSQL.
+        students: data.students.map((student) => ({
+          id: student.id,
+          name: `${student.first_name} ${student.last_name}`,
+          email: student.email,
+          rollNo: student.roll_no,
+
+          // Student attendance will be connected later.
+          attendance: student.attendance,
+
+          status: student.status,
+        })),
+
+        capacity: data.capacity,
+        status: data.status,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch class:", error);
+  }
+
+  // Show your existing "Class Not Found" UI
+  // if the backend couldn't find the class.
   if (!currentClass) {
     return (
       <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
@@ -210,7 +146,7 @@ export default async function ManageClassPage({ params }: PageProps) {
             </h1>
 
             <p className="mt-2 text-sm font-medium text-gray-500">
-              The class &quot;{classCode}&quot; does not exist.
+              The class &quot;{classId}&quot; does not exist.
             </p>
 
             <Link
@@ -255,7 +191,7 @@ export default async function ManageClassPage({ params }: PageProps) {
             </p>
           </div>
 
-          {/* <Link
+          <Link
             href={`/teacher/attendance?class=${encodeURIComponent(
               currentClass.code,
             )}`}
@@ -263,7 +199,7 @@ export default async function ManageClassPage({ params }: PageProps) {
           >
             <ClipboardCheck className="h-4 w-4" />
             Take Attendance
-          </Link> */}
+          </Link>
         </div>
 
         {/* Stats */}
@@ -297,7 +233,7 @@ export default async function ManageClassPage({ params }: PageProps) {
             icon={<CalendarDays className="h-5 w-5" />}
             label="Classroom"
             value={currentClass.room}
-            description={currentClass.time}
+            description={currentClass.time ?? "Not available"}
           />
         </div>
 
@@ -327,9 +263,7 @@ export default async function ManageClassPage({ params }: PageProps) {
         {/* Quick Actions */}
         <section>
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-900">
-              Quick Actions
-            </h2>
+            <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
 
             <p className="mt-1 text-sm font-medium text-gray-500">
               Quickly access common class management tasks.
@@ -373,9 +307,7 @@ export default async function ManageClassPage({ params }: PageProps) {
         <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
           <div className="flex flex-col justify-between gap-3 border-b border-gray-200 px-6 py-5 sm:flex-row sm:items-center">
             <div>
-              <h2 className="text-base font-bold text-gray-900">
-                Subjects
-              </h2>
+              <h2 className="text-base font-bold text-gray-900">Subjects</h2>
 
               <p className="mt-1 text-sm font-medium text-gray-500">
                 Subjects currently assigned to this class.
@@ -390,7 +322,7 @@ export default async function ManageClassPage({ params }: PageProps) {
           <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
             {currentClass.subjects.map((subject, index) => (
               <div
-                key={subject}
+                key={subject.id}
                 className="group flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/60 p-4 transition hover:border-indigo-200 hover:bg-indigo-50/40"
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -399,7 +331,7 @@ export default async function ManageClassPage({ params }: PageProps) {
                   </div>
 
                   <p className="truncate text-sm font-semibold text-gray-800">
-                    {subject}
+                    {subject.name}
                   </p>
                 </div>
 
@@ -416,9 +348,7 @@ export default async function ManageClassPage({ params }: PageProps) {
         >
           <div className="flex flex-col justify-between gap-3 border-b border-gray-200 px-6 py-5 sm:flex-row sm:items-center">
             <div>
-              <h2 className="text-base font-bold text-gray-900">
-                Students
-              </h2>
+              <h2 className="text-base font-bold text-gray-900">Students</h2>
 
               <p className="mt-1 text-sm font-medium text-gray-500">
                 Students enrolled in {currentClass.name}.
@@ -506,13 +436,13 @@ export default async function ManageClassPage({ params }: PageProps) {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                          aria-label={`More options for ${student.name}`}
+                        <Link
+                          href={`/teacher/students/${student.id}`}
+                          className="inline-flex rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                          aria-label={`View ${student.name}`}
                         >
                           <MoreHorizontal className="h-5 w-5" />
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -584,20 +514,12 @@ function StatCard({
         {value}
       </p>
 
-      <p className="mt-1 text-xs font-medium text-gray-400">
-        {description}
-      </p>
+      <p className="mt-1 text-xs font-medium text-gray-400">{description}</p>
     </div>
   );
 }
 
-function InfoBox({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function InfoBox({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
       <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
@@ -633,13 +555,9 @@ function QuickAction({
         <ArrowRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" />
       </div>
 
-      <h3 className="mt-4 text-sm font-bold text-gray-900">
-        {title}
-      </h3>
+      <h3 className="mt-4 text-sm font-bold text-gray-900">{title}</h3>
 
-      <p className="mt-1 text-xs font-medium text-gray-500">
-        {description}
-      </p>
+      <p className="mt-1 text-xs font-medium text-gray-500">{description}</p>
     </Link>
   );
 }

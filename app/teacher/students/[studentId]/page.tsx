@@ -16,6 +16,16 @@ import {
 
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
 /* --------------------------------
    API Student Type
 --------------------------------- */
@@ -35,6 +45,21 @@ type StudentFromAPI = {
   status: "Active" | "Inactive";
   location: string | null;
   created_at: string;
+
+  // Real class information from the backend.
+  class_id: number | null;
+  class_code: string | null;
+
+  // Overall attendance calculated by the backend.
+  attendance: number;
+
+  // Attendance for each subject.
+  subjects: {
+    id: number;
+    name: string;
+    code: string;
+    attendance: number;
+  }[];
 };
 
 /* --------------------------------
@@ -52,12 +77,25 @@ type Student = {
   name: string;
   email: string;
   rollNo: string;
+
+  // The class code, such as BCA3A or BCA3B.
   className: string;
+
+  // Needed when opening the class profile.
+  classId: number | null;
+
+  // Overall attendance percentage.
   attendance: number;
-  status: "Active" | "Inactive";
+
+  // Attendance-based status.
+  status: "Active" | "Less Active" | "Inactive";
+
   location: string;
+
   subjects: {
+    id: number;
     name: string;
+    code: string;
     attendance: number;
   }[];
 };
@@ -121,9 +159,7 @@ function StatCard({
           {value}
         </p>
 
-        <p className="mt-1 text-xs font-medium text-slate-400">
-          {description}
-        </p>
+        <p className="mt-1 text-xs font-medium text-slate-400">{description}</p>
       </div>
     </div>
   );
@@ -145,8 +181,9 @@ export default function StudentProfilePage() {
   const studentId = Number(params.studentId);
 
   // Store the student received from our backend.
-  const [studentFromAPI, setStudentFromAPI] =
-    useState<StudentFromAPI | null>(null);
+  const [studentFromAPI, setStudentFromAPI] = useState<StudentFromAPI | null>(
+    null,
+  );
 
   // Keep track of whether the API request is still running.
   const [loading, setLoading] = useState(true);
@@ -212,17 +249,33 @@ export default function StudentProfilePage() {
   // Convert PostgreSQL field names into
   // the structure expected by our existing UI.
   const student: Student | null = useMemo(() => {
-    // If the API hasn't returned a student yet,
-    // there is nothing to convert.
+    // Wait until the API has returned the student.
     if (!studentFromAPI) {
       return null;
+    }
+
+    // Convert the attendance value into a number.
+    const attendance = Number(studentFromAPI.attendance);
+
+    // Calculate the attendance-based status.
+    //
+    // 0%          → Inactive
+    // 1% - 49%    → Less Active
+    // 50% - 100%  → Active
+    let attendanceStatus: "Active" | "Less Active" | "Inactive";
+
+    if (attendance === 0) {
+      attendanceStatus = "Inactive";
+    } else if (attendance < 50) {
+      attendanceStatus = "Less Active";
+    } else {
+      attendanceStatus = "Active";
     }
 
     return {
       id: studentFromAPI.id,
 
-      // Combine first_name and last_name
-      // into the full name used by the UI.
+      // Combine first and last name.
       name: `${studentFromAPI.first_name} ${studentFromAPI.last_name}`,
 
       // Email comes directly from PostgreSQL.
@@ -231,28 +284,23 @@ export default function StudentProfilePage() {
       // Convert roll_no → rollNo.
       rollNo: studentFromAPI.roll_no,
 
-      // Temporary value.
-      //
-      // We will replace this with the real class
-      // after creating the Classes relationship.
-      className: "Not assigned",
+      // Use the class code returned by PostgreSQL.
+      className: studentFromAPI.class_code ?? "Not assigned",
 
-      // Temporary value.
-      //
-      // We will replace this with real attendance
-      // after creating the Attendance table.
-      attendance: 0,
+      // Keep the actual class ID for navigation.
+      classId: studentFromAPI.class_id,
 
-      // Status comes directly from PostgreSQL.
-      status: studentFromAPI.status,
+      // Use real attendance from the backend.
+      attendance,
 
-      // PostgreSQL location can be NULL,
-      // so provide a fallback for the UI.
+      // Calculate status from attendance.
+      status: attendanceStatus,
+
+      // PostgreSQL location can be NULL.
       location: studentFromAPI.location ?? "Not provided",
 
-      // Subjects will be connected later when
-      // we create the Subjects/Class relationships.
-      subjects: [],
+      // Use the real subject attendance data.
+      subjects: studentFromAPI.subjects ?? [],
     };
   }, [studentFromAPI]);
 
@@ -363,13 +411,14 @@ export default function StudentProfilePage() {
             className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-bold ${
               student.status === "Active"
                 ? "bg-emerald-50 text-emerald-700"
-                : "bg-slate-100 text-slate-600"
+                : student.status === "Less Active"
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-slate-100 text-slate-600"
             }`}
           >
             {student.status}
           </span>
         </div>
-
         {/* Profile Card */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -406,20 +455,8 @@ export default function StudentProfilePage() {
                 </div>
               </div>
             </div>
-
-            {/* Class is not connected yet, so this remains
-                visually the same but points to the current
-                temporary class value. */}
-            <Link
-              href={`/teacher/classes/${student.className.replace(" ", "-")}`}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600"
-            >
-              View Class
-              <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
         </div>
-
         {/* Statistics */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -454,9 +491,10 @@ export default function StudentProfilePage() {
             color="amber"
           />
         </div>
-
+        
         {/* Subject Attendance */}
         <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          {/* Section Header */}
           <div className="border-b border-slate-100 px-6 py-5">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
@@ -468,47 +506,114 @@ export default function StudentProfilePage() {
                   Subject Attendance
                 </h2>
 
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs font-medium text-slate-400">
                   Attendance performance by subject
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Subjects will be empty for now because
-              we have not created the subject/attendance
-              database relationships yet. */}
+          {/* Chart */}
           {student.subjects.length > 0 ? (
-            <div className="divide-y divide-slate-100">
-              {student.subjects.map((subject) => (
-                <div
-                  key={subject.name}
-                  className="flex items-center justify-between gap-4 px-6 py-4"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-700">
-                      {subject.name}
-                    </p>
-                  </div>
+            <div className="px-6 py-6">
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={student.subjects}
+                    layout="vertical"
+                    margin={{
+                      top: 10,
+                      right: 20,
+                      left: 20,
+                      bottom: 10,
+                    }}
+                  >
+                    {/* Background grid */}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                      stroke="#e2e8f0"
+                    />
 
-                  <div className="flex items-center gap-3">
-                    <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-slate-100 sm:block">
-                      <div
-                        className="h-full rounded-full bg-indigo-500"
-                        style={{
-                          width: `${subject.attendance}%`,
-                        }}
-                      />
-                    </div>
+                    {/* Subject names */}
+                    <YAxis
+                      type="category"
+                      dataKey="code"
+                      width={70}
+                      tick={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fill: "#64748b",
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
 
-                    <span className="w-10 text-right text-sm font-bold text-slate-700">
-                      {subject.attendance}%
-                    </span>
-                  </div>
+                    {/* Percentage scale */}
+                    <XAxis
+                      type="number"
+                      domain={[0, 100]}
+                      tick={{
+                        fontSize: 11,
+                        fill: "#94a3b8",
+                      }}
+                      tickFormatter={(value) => `${value}%`}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+
+                    {/* Hover information */}
+                    <Tooltip
+                      cursor={{ fill: "#f8fafc" }}
+                      formatter={(value) => [`${value}%`, "Attendance"]}
+                      labelFormatter={(label) => {
+                        const subject = student.subjects.find(
+                          (item) => item.code === label,
+                        );
+
+                        return subject
+                          ? `${subject.name} (${subject.code})`
+                          : label;
+                      }}
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "1px solid #e2e8f0",
+                        boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                      }}
+                    />
+
+                    {/* Attendance bars */}
+                    <Bar
+                      dataKey="attendance"
+                      name="Attendance"
+                      fill="#6366f1"
+                      radius={[0, 8, 8, 0]}
+                      barSize={26}
+                      animationDuration={800}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Chart Legend / Summary */}
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+
+                  <span className="text-xs font-medium text-slate-500">
+                    Attendance percentage
+                  </span>
                 </div>
-              ))}
+
+                <span className="text-xs font-semibold text-slate-400">
+                  0% — 100%
+                </span>
+              </div>
             </div>
           ) : (
+            /* Empty state */
             <div className="px-6 py-10 text-center">
               <BookOpen className="mx-auto h-6 w-6 text-slate-300" />
 
@@ -517,13 +622,12 @@ export default function StudentProfilePage() {
               </p>
 
               <p className="mt-1 text-xs font-medium text-slate-400">
-                Subject and attendance data will appear here once those
-                database tables are connected.
+                Subject and attendance data will appear here once those database
+                tables are connected.
               </p>
             </div>
           )}
         </div>
-
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-3">
           <Link
@@ -543,7 +647,11 @@ export default function StudentProfilePage() {
           </Link>
 
           <Link
-            href={`/teacher/classes/${student.className.replace(" ", "-")}`}
+            href={
+              student.classId
+                ? `/teacher/classes/${student.classId}`
+                : "/teacher/classes"
+            }
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
           >
             <User className="h-4 w-4" />

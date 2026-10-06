@@ -27,9 +27,17 @@ type StudentFromAPI = {
   email: string;
   phone: string | null;
   roll_no: string;
+
+  // Student's actual database/enrollment status.
+  // We will NOT use this for the attendance-based Status column.
   status: "Active" | "Inactive";
+
   location: string | null;
   created_at: string;
+
+  // These values come from the backend.
+  class_name: string | null;
+  attendance: string | number;
 };
 
 /* --------------------------------
@@ -47,7 +55,9 @@ type Student = {
   rollNo: string;
   className: string;
   attendance: number;
-  status: "Active" | "Inactive";
+
+  // This status is calculated from attendance percentage.
+  status: "Active" | "Less Active" | "Inactive";
 };
 
 export default function StudentsPage() {
@@ -55,9 +65,7 @@ export default function StudentsPage() {
   const [search, setSearch] = useState("");
 
   // Stores students received from our backend API
-  const [studentsFromAPI, setStudentsFromAPI] = useState<StudentFromAPI[]>(
-    [],
-  );
+  const [studentsFromAPI, setStudentsFromAPI] = useState<StudentFromAPI[]>([]);
 
   // Shows a loading state while the API request is running
   const [loading, setLoading] = useState(true);
@@ -121,27 +129,48 @@ export default function StudentsPage() {
   // So we convert the database format into the format
   // expected by our existing UI.
   const students: Student[] = useMemo(() => {
-    return studentsFromAPI.map((student) => ({
-      id: student.id,
+    return studentsFromAPI.map((student) => {
+      // Convert the attendance value from PostgreSQL
+      // into a JavaScript number.
+      const attendance = Number(student.attendance);
 
-      // Combine first and last name
-      name: `${student.first_name} ${student.last_name}`,
+      // Calculate the attendance-based status.
+      //
+      // 0%          → Inactive
+      // 1% - 49%    → Less Active
+      // 50% - 100%  → Active
+      let attendanceStatus: "Active" | "Less Active" | "Inactive";
 
-      // Email comes directly from PostgreSQL
-      email: student.email,
+      if (attendance === 0) {
+        attendanceStatus = "Inactive";
+      } else if (attendance < 50) {
+        attendanceStatus = "Less Active";
+      } else {
+        attendanceStatus = "Active";
+      }
 
-      // Convert roll_no to rollNo
-      rollNo: student.roll_no,
+      return {
+        id: student.id,
 
-      // Temporary value until we create the Classes table
-      className: "Not assigned",
+        // Combine first and last name.
+        name: `${student.first_name} ${student.last_name}`,
 
-      // Temporary value until we create the Attendance table
-      attendance: 0,
+        // Email comes from PostgreSQL.
+        email: student.email,
 
-      // Status comes directly from PostgreSQL
-      status: student.status,
-    }));
+        // Convert roll_no to the frontend rollNo name.
+        rollNo: student.roll_no,
+
+        // Use the class name returned by the backend.
+        className: student.class_name ?? "Not assigned",
+
+        // Store the real attendance percentage.
+        attendance,
+
+        // Use our newly calculated attendance status.
+        status: attendanceStatus,
+      };
+    });
   }, [studentsFromAPI]);
 
   /* --------------------------------
@@ -288,9 +317,7 @@ export default function StudentsPage() {
               Unable to load students
             </h2>
 
-            <p className="mt-1 text-sm font-medium text-gray-500">
-              {error}
-            </p>
+            <p className="mt-1 text-sm font-medium text-gray-500">{error}</p>
 
             <p className="mt-2 text-xs font-medium text-gray-400">
               Make sure your backend server is running on port 5000.
@@ -308,7 +335,6 @@ export default function StudentsPage() {
   return (
     <div className="min-h-full bg-gray-50/60 p-6 font-sans antialiased lg:p-8">
       <div className="mx-auto max-w-[1500px] space-y-6">
-
         {/* Header */}
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
@@ -364,7 +390,6 @@ export default function StudentsPage() {
 
         {/* Student Directory */}
         <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-
           {/* Directory Header */}
           <div className="flex flex-col justify-between gap-4 border-b border-gray-200 px-6 py-5 lg:flex-row lg:items-center">
             <div>
@@ -378,7 +403,6 @@ export default function StudentsPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -412,11 +436,9 @@ export default function StudentsPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[850px] text-left">
-
                   {/* Table Header */}
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50/70">
-
                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
                         Student
                       </th>
@@ -440,7 +462,6 @@ export default function StudentsPage() {
                       <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wide text-gray-500">
                         Action
                       </th>
-
                     </tr>
                   </thead>
 
@@ -451,11 +472,9 @@ export default function StudentsPage() {
                         key={student.id}
                         className="transition hover:bg-gray-50/70"
                       >
-
                         {/* Student */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-
                             {/* Student initials */}
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">
                               {getInitials(student.name)}
@@ -471,7 +490,6 @@ export default function StudentsPage() {
                                 {student.email}
                               </div>
                             </div>
-
                           </div>
                         </td>
 
@@ -490,7 +508,6 @@ export default function StudentsPage() {
                         {/* Attendance */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-
                             <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100">
                               <div
                                 className="h-full rounded-full bg-indigo-500"
@@ -503,7 +520,6 @@ export default function StudentsPage() {
                             <span className="text-sm font-bold text-gray-700">
                               {student.attendance}%
                             </span>
-
                           </div>
                         </td>
 
@@ -513,7 +529,9 @@ export default function StudentsPage() {
                             className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
                               student.status === "Active"
                                 ? "bg-emerald-50 text-emerald-600"
-                                : "bg-gray-100 text-gray-500"
+                                : student.status === "Less Active"
+                                  ? "bg-amber-50 text-amber-600"
+                                  : "bg-gray-100 text-gray-500"
                             }`}
                           >
                             {student.status}
@@ -531,17 +549,14 @@ export default function StudentsPage() {
                             <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
                           </Link>
                         </td>
-
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               </div>
 
               {/* Pagination */}
               <div className="flex flex-col justify-between gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:items-center">
-
                 <p className="text-xs font-medium text-gray-500">
                   Showing{" "}
                   <span className="font-bold text-gray-700">
@@ -564,7 +579,6 @@ export default function StudentsPage() {
                 </p>
 
                 <div className="flex items-center gap-2">
-
                   {/* Previous button */}
                   <button
                     type="button"
@@ -588,24 +602,19 @@ export default function StudentsPage() {
                     type="button"
                     disabled={safeCurrentPage === totalPages}
                     onClick={() =>
-                      setCurrentPage((page) =>
-                        Math.min(totalPages, page + 1),
-                      )
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
                     }
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Next
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
-
                 </div>
               </div>
             </>
           ) : (
-
             /* No students found */
             <div className="px-6 py-16 text-center">
-
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                 <Users className="h-6 w-6" />
               </div>
@@ -629,7 +638,6 @@ export default function StudentsPage() {
               >
                 Clear Filters
               </button>
-
             </div>
           )}
         </section>
@@ -640,7 +648,6 @@ export default function StudentsPage() {
             Student Management · Teacher Dashboard
           </p>
         </div>
-
       </div>
     </div>
   );
@@ -681,17 +688,13 @@ function StatCard({
         </div>
       </div>
 
-      <p className="mt-4 text-sm font-semibold text-gray-500">
-        {label}
-      </p>
+      <p className="mt-4 text-sm font-semibold text-gray-500">{label}</p>
 
       <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900">
         {value}
       </p>
 
-      <p className="mt-1 text-xs font-medium text-gray-400">
-        {description}
-      </p>
+      <p className="mt-1 text-xs font-medium text-gray-400">{description}</p>
     </div>
   );
 }

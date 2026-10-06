@@ -15,47 +15,97 @@ import {
   ArrowUpRight,
   Layers3,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 
-const assignments = [
-  {
-    id: "assignment-1",
-    title: "Database Design Project",
-    className: "BCA 3A",
-    subject: "DBMS",
-    due: "Sep 08, 2026",
-    submissions: 38,
-    total: 45,
-    status: "Review",
-  },
-  {
-    id: "assignment-2",
-    title: "React Portfolio Website",
-    className: "BCA 3B",
-    subject: "Web Development",
-    due: "Sep 10, 2026",
-    submissions: 31,
-    total: 40,
-    status: "Review",
-  },
-  {
-    id: "assignment-3",
-    title: "Machine Learning Basics",
-    className: "BCA 4A",
-    subject: "Data Science",
-    due: "Sep 12, 2026",
-    submissions: 0,
-    total: 44,
-    status: "Upcoming",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AssignmentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
+  // Stores the assignments received from our backend API
+  const [assignments, setAssignments] = useState<any[]>([]);
+
+  // Tells us whether the backend data is still loading
+  const [loading, setLoading] = useState(true);
+
+  // Stores an error message if the API request fails
+  const [error, setError] = useState("");
+
   const router = useRouter();
+
+  useEffect(() => {
+    // Fetch assignments from our Express backend
+    const fetchAssignments = async () => {
+      try {
+        // Start loading
+        setLoading(true);
+
+        // Clear any previous error
+        setError("");
+
+        // Request assignment data from the backend
+        const response = await fetch("http://localhost:5000/api/assignments");
+
+        // Check whether the backend responded successfully
+        if (!response.ok) {
+          throw new Error("Failed to fetch assignments");
+        }
+
+        // Convert the backend response into JavaScript data
+        const data = await response.json();
+
+        // Convert the backend field names into the field names
+        // that our existing Assignments UI already uses.
+        const formattedAssignments = data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+
+          // The UI currently displays the class name.
+          className: item.class_code,
+
+          // The UI currently displays the subject name/code.
+          subject: item.subject_code,
+
+          // Convert the database date into a readable date.
+          due: new Date(item.due_date).toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          // Submission information is not available in our database yet.
+          // Use 0 temporarily instead of allowing undefined/NaN.
+          submissions: 0,
+
+          // We don't have the number of students for this assignment yet.
+          // Use 0 temporarily so calculations remain safe.
+          total: 0,
+
+          // A newly created assignment has no submissions yet,
+          // so display it as Upcoming for now.
+          status: "Upcoming",
+        }));
+
+        // Save the formatted assignments in React state.
+        setAssignments(formattedAssignments);
+        console.log("Formatted assignments:", formattedAssignments);
+      } catch (error) {
+        // Show an error in the browser console
+        console.error("Error fetching assignments:", error);
+
+        // Show a simple message on the page
+        setError("Failed to load assignments.");
+      } finally {
+        // Loading is finished whether the request succeeded or failed
+        setLoading(false);
+      }
+    };
+
+    // Run the function when the page loads
+    fetchAssignments();
+  }, []);
 
   const filtered = useMemo(() => {
     return assignments.filter((item) => {
@@ -71,7 +121,7 @@ export default function AssignmentsPage() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [assignments, search, statusFilter]);
 
   const totalAssignments = assignments.length;
 
@@ -84,10 +134,7 @@ export default function AssignmentsPage() {
     0,
   );
 
-  const totalStudents = assignments.reduce(
-    (sum, item) => sum + item.total,
-    0,
-  );
+  const totalStudents = assignments.reduce((sum, item) => sum + item.total, 0);
 
   const completionRate =
     totalStudents > 0
@@ -227,10 +274,10 @@ export default function AssignmentsPage() {
                   />
                 </div>
 
-                <button className="hidden h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 sm:flex">
+                {/* <button className="hidden h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 sm:flex">
                   <MoreHorizontal size={16} />
                   More
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -289,9 +336,7 @@ export default function AssignmentsPage() {
                   filtered.map((item) => {
                     const percentage =
                       item.total > 0
-                        ? Math.round(
-                            (item.submissions / item.total) * 100,
-                          )
+                        ? Math.round((item.submissions / item.total) * 100)
                         : 0;
 
                     return (
@@ -315,10 +360,7 @@ export default function AssignmentsPage() {
                               </p>
 
                               <div className="mt-1 flex items-center gap-1.5">
-                                <Layers3
-                                  size={11}
-                                  className="text-slate-400"
-                                />
+                                <Layers3 size={11} className="text-slate-400" />
 
                                 <p className="text-[11px] font-medium text-slate-400">
                                   {item.subject}
@@ -403,9 +445,7 @@ export default function AssignmentsPage() {
                           <div className="flex justify-end">
                             <button
                               onClick={() =>
-                                router.push(
-                                  `/teacher/assignments/${item.id}`,
-                                )
+                                router.push(`/teacher/assignments/${item.id}`)
                               }
                               className="group/action inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:border-indigo-100 hover:bg-indigo-50"
                             >
@@ -537,9 +577,7 @@ function KpiCard({
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold text-slate-500">
-            {title}
-          </p>
+          <p className="text-xs font-semibold text-slate-500">{title}</p>
 
           <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
             {value}

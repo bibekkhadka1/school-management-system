@@ -45,26 +45,19 @@ export default function Footer() {
           {/* Footer Links */}
           <div className="flex items-center gap-4 sm:gap-6">
             <a
-              href="#"
+              href="/teacher/privacy"
               className="text-[10px] font-semibold text-slate-300 transition-all duration-200 hover:text-blue-400"
             >
               Privacy Policy
             </a>
 
             <a
-              href="#"
+              href="/teacher/terms"
               className="text-[10px] font-semibold text-slate-300 transition-all duration-200 hover:text-blue-400"
             >
               Terms of Service
             </a>
 
-            <a
-              href="#"
-              className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-300 transition-all duration-200 hover:text-blue-400"
-            >
-              <LifeBuoy size={12} className="text-slate-400 group-hover:text-blue-400" />
-              Support
-            </a>
           </div>
 
         </div>

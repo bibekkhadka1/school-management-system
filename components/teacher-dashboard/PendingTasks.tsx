@@ -1,343 +1,147 @@
 "use client";
 
-import {
-  FileCheck,
-  ClipboardList,
-  ClipboardCheck,
-  FileText,
-  ArrowRight,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Check, ClipboardList, Clock3 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const tasks = [
+type Task = {
+  id: number;
+  title: string;
+  description: string;
+  priority: "High" | "Medium" | "Low";
+  href: string;
+};
+
+const initialTasks: Task[] = [
   {
-    title: "Grade Assignments",
-    count: "4 submissions",
-    priority: "URGENT",
-    icon: FileCheck,
+    id: 1,
+    title: "Review Database assignments",
+    description: "38 submissions waiting",
+    priority: "High",
+    href: "/teacher/assignments",
   },
   {
-    title: "Enter Exam Marks",
-    count: "2 pending",
-    priority: "IMPORTANT",
-    icon: ClipboardList,
+    id: 2,
+    title: "Complete BCA-3B attendance",
+    description: "Today's attendance",
+    priority: "High",
+    href: "/teacher/attendance",
   },
   {
-    title: "Mark Attendance",
-    count: "1 class",
-    priority: "NORMAL",
-    icon: ClipboardCheck,
+    id: 3,
+    title: "Prepare Data Science exam",
+    description: "Exam scheduled Sep 22",
+    priority: "Medium",
+    href: "/teacher/exams",
   },
   {
-    title: "Material Review",
-    count: "3 items",
-    priority: "NORMAL",
-    icon: FileText,
+    id: 4,
+    title: "Upload course material",
+    description: "Web Development module",
+    priority: "Low",
+    href: "/teacher/materials",
   },
 ];
 
 export default function PendingTasks() {
+  const router = useRouter();
+  const [tasks, setTasks] = useState(initialTasks);
+
+  const completeTask = (id: number) => {
+    setTasks((current) => current.filter((task) => task.id !== id));
+  };
+
   return (
-    <div
-      className="
-        group
-        relative
-        h-full
-        overflow-hidden
-        rounded-2xl
-        border
-        border-slate-200/80
-        bg-white
-        p-5
-        shadow-sm
-        transition-all
-        duration-300
-        hover:border-slate-300
-        hover:shadow-lg
-      "
-    >
-      {/* Decorative Background */}
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -right-16
-          -top-16
-          h-40
-          w-40
-          rounded-full
-          bg-amber-500/[0.04]
-          blur-3xl
-        "
-      />
+    <section className="h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900">
+              Pending Tasks
+            </h2>
 
-      <div className="relative flex h-full flex-col">
-
-        {/* ================= HEADER ================= */}
-
-        <div className="mb-5 flex items-center justify-between">
-
-          <div className="flex items-center gap-3">
-
-            {/* Icon */}
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                items-center
-                justify-center
-                rounded-xl
-                bg-amber-50
-                text-amber-600
-              "
-            >
-              <AlertCircle
-                size={18}
-                strokeWidth={2}
-              />
-            </div>
-
-            {/* Title */}
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">
-                Pending Tasks
-              </h2>
-
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                Tasks that need your attention
-              </p>
-            </div>
-
-          </div>
-
-          {/* Task Count */}
-          <div
-            className="
-              flex
-              items-center
-              gap-1.5
-              rounded-full
-              bg-slate-100
-              px-2.5
-              py-1
-            "
-          >
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-amber-500
-              "
-            />
-
-            <span
-              className="
-                text-[9px]
-                font-bold
-                text-slate-500
-              "
-            >
-              {tasks.length} Tasks
+            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+              {tasks.length}
             </span>
           </div>
 
+          <p className="mt-1 text-[11px] font-medium text-slate-400">
+            Things that need your attention
+          </p>
         </div>
+      </div>
 
-        {/* ================= TASK LIST ================= */}
-
-        <div className="flex-1 space-y-2.5">
-
-          {tasks.map((task, index) => {
-            const Icon = task.icon;
-
-            const isUrgent = task.priority === "URGENT";
-            const isImportant = task.priority === "IMPORTANT";
-
-            return (
-              <div
-                key={index}
-                className="
-                  relative
-                  flex
-                  cursor-pointer
-                  items-center
-                  gap-3
-                  rounded-xl
-                  border
-                  border-slate-100
-                  bg-slate-50/50
-                  p-3
-                  transition-all
-                  duration-300
-                  hover:-translate-y-0.5
-                  hover:border-slate-200
-                  hover:bg-white
-                  hover:shadow-sm
-                "
+      <div className="divide-y divide-slate-100">
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <div
+              key={task.id}
+              className="group flex gap-3 px-5 py-4 transition hover:bg-slate-50/70"
+            >
+              <button
+                type="button"
+                onClick={() => completeTask(task.id)}
+                className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-transparent transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600"
+                aria-label={`Complete ${task.title}`}
+                title="Mark complete"
               >
+                <Check className="h-3.5 w-3.5" />
+              </button>
 
-                {/* Priority Indicator */}
-                <div
-                  className={`
-                    absolute
-                    left-0
-                    top-1/2
-                    h-6
-                    w-0.5
-                    -translate-y-1/2
-                    rounded-r-full
-
-                    ${
-                      isUrgent
-                        ? "bg-red-500"
-                        : isImportant
-                        ? "bg-amber-500"
-                        : "bg-slate-300"
-                    }
-                  `}
-                />
-
-                {/* Icon */}
-                <div
-                  className={`
-                    flex
-                    h-9
-                    w-9
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-lg
-
-                    ${
-                      isUrgent
-                        ? "bg-red-50 text-red-500"
-                        : isImportant
-                        ? "bg-amber-50 text-amber-600"
-                        : "bg-blue-50 text-blue-600"
-                    }
-                  `}
-                >
-                  <Icon
-                    size={16}
-                    strokeWidth={2}
-                  />
-                </div>
-
-                {/* Task Details */}
-                <div className="min-w-0 flex-1">
-
-                  <p
-                    className="
-                      truncate
-                      text-xs
-                      font-semibold
-                      text-slate-800
-                    "
-                  >
+              <button
+                type="button"
+                onClick={() => router.push(task.href)}
+                className="min-w-0 flex-1 text-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-bold text-slate-800 transition group-hover:text-indigo-600">
                     {task.title}
                   </p>
 
-                  <p
-                    className="
-                      mt-1
-                      text-[10px]
-                      font-medium
-                      text-slate-400
-                    "
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                      task.priority === "High"
+                        ? "bg-rose-50 text-rose-600"
+                        : task.priority === "Medium"
+                          ? "bg-orange-50 text-orange-600"
+                          : "bg-slate-100 text-slate-500"
+                    }`}
                   >
-                    {task.count}
-                  </p>
-
+                    {task.priority}
+                  </span>
                 </div>
 
-                {/* Priority */}
-                <span
-                  className={`
-                    shrink-0
-                    rounded-full
-                    px-2
-                    py-1
-                    text-[8px]
-                    font-bold
-                    tracking-wide
+                <p className="mt-1 text-[10px] font-medium text-slate-400">
+                  {task.description}
+                </p>
+              </button>
 
-                    ${
-                      isUrgent
-                        ? "bg-red-50 text-red-500"
-                        : isImportant
-                        ? "bg-amber-50 text-amber-600"
-                        : "bg-slate-100 text-slate-500"
-                    }
-                  `}
-                >
-                  {task.priority}
-                </span>
+              <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+            </div>
+          ))
+        ) : (
+          <div className="px-5 py-12 text-center">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <ClipboardList className="h-5 w-5" />
+            </div>
 
-              </div>
-            );
-          })}
+            <p className="mt-3 text-xs font-bold text-slate-800">
+              All caught up
+            </p>
 
-        </div>
-
-        {/* ================= FOOTER ================= */}
-
-        <div
-          className="
-            mt-4
-            flex
-            items-center
-            justify-between
-            border-t
-            border-slate-100
-            pt-3
-          "
-        >
-
-          <div className="flex items-center gap-1.5">
-
-            <CheckCircle2
-              size={12}
-              className="text-emerald-500"
-            />
-
-            <span
-              className="
-                text-[10px]
-                font-medium
-                text-slate-400
-              "
-            >
-              Stay on top of your work
-            </span>
-
+            <p className="mt-1 text-[10px] font-medium text-slate-400">
+              You have no pending tasks.
+            </p>
           </div>
-
-          <button
-            type="button"
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-1
-              text-[10px]
-              font-semibold
-              text-slate-500
-              transition-colors
-              duration-200
-              hover:text-blue-600
-            "
-          >
-            View All
-
-            <ArrowRight size={12} />
-          </button>
-
-        </div>
-
+        )}
       </div>
-    </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-3">
+        <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+          <Clock3 className="h-3.5 w-3.5" />
+          Click the check button to complete a task
+        </div>
+      </div>
+    </section>
   );
 }
